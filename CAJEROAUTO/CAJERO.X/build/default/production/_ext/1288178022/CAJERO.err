@@ -1,0 +1,39 @@
+Warning[205] D:\MICROC\LAB3\CAJEROAUTO\CAJERO.X\CAJERO.ASM 11 : Found directive in column 1. (lIST)
+Warning[205] D:\MICROC\LAB3\CAJEROAUTO\CAJERO.X\CAJERO.ASM 53 : Found directive in column 1. (ORG)
+Warning[207] D:\MICROC\LAB3\CAJEROAUTO\CAJERO.X\CAJERO.ASM 126 : Found label after column 1. (START)
+Warning[207] D:\MICROC\LAB3\CAJEROAUTO\CAJERO.X\CAJERO.ASM 160 : Found label after column 1. (INTERRUPCION)
+Message[302] D:\MICROC\LAB3\CAJEROAUTO\CAJERO.X\CONFIGURACION.INC 7 : Register in operand not in bank 0.  Ensure that bank bits are correct.
+Message[302] D:\MICROC\LAB3\CAJEROAUTO\CAJERO.X\CONFIGURACION.INC 9 : Register in operand not in bank 0.  Ensure that bank bits are correct.
+Message[302] D:\MICROC\LAB3\CAJEROAUTO\CAJERO.X\CONFIGURACION.INC 10 : Register in operand not in bank 0.  Ensure that bank bits are correct.
+Message[302] D:\MICROC\LAB3\CAJEROAUTO\CAJERO.X\CONFIGURACION.INC 11 : Register in operand not in bank 0.  Ensure that bank bits are correct.
+Message[302] D:\MICROC\LAB3\CAJEROAUTO\CAJERO.X\CONFIGURACION.INC 13 : Register in operand not in bank 0.  Ensure that bank bits are correct.
+Message[302] D:\MICROC\LAB3\CAJEROAUTO\CAJERO.X\CONFIGURACION.INC 14 : Register in operand not in bank 0.  Ensure that bank bits are correct.
+Message[302] D:\MICROC\LAB3\CAJEROAUTO\CAJERO.X\CONFIGURACION.INC 18 : Register in operand not in bank 0.  Ensure that bank bits are correct.
+Message[302] D:\MICROC\LAB3\CAJEROAUTO\CAJERO.X\CONFIGURACION.INC 21 : Register in operand not in bank 0.  Ensure that bank bits are correct.
+Message[302] D:\MICROC\LAB3\CAJEROAUTO\CAJERO.X\CONFIGURACION.INC 22 : Register in operand not in bank 0.  Ensure that bank bits are correct.
+Warning[203] D:\MICROC\LAB3\CAJEROAUTO\CAJERO.X\INI_LCD.INC 25 : Found opcode in column 1. (RETURN)
+Message[305] D:\MICROC\LAB3\CAJEROAUTO\CAJERO.X\BIENVENIDOS.INC 18 : Using default destination of 1 (file).
+Message[305] D:\MICROC\LAB3\CAJEROAUTO\CAJERO.X\CLAVE.INC 19 : Using default destination of 1 (file).
+Message[305] D:\MICROC\LAB3\CAJEROAUTO\CAJERO.X\CLAVE.INC 40 : Using default destination of 1 (file).
+Message[305] D:\MICROC\LAB3\CAJEROAUTO\CAJERO.X\REVISAR_CLAVE.INC 50 : Using default destination of 1 (file).
+Warning[203] D:\MICROC\LAB3\CAJEROAUTO\CAJERO.X\REVISAR_CLAVE.INC 55 : Found opcode in column 1. (RETURN)
+Message[305] D:\MICROC\LAB3\CAJEROAUTO\CAJERO.X\REVISAR_CLAVE.INC 61 : Using default destination of 1 (file).
+Message[305] D:\MICROC\LAB3\CAJEROAUTO\CAJERO.X\REVISAR_CLAVE.INC 62 : Using default destination of 1 (file).
+Message[305] D:\MICROC\LAB3\CAJEROAUTO\CAJERO.X\REVISAR_CLAVE.INC 83 : Using default destination of 1 (file).
+Message[305] D:\MICROC\LAB3\CAJEROAUTO\CAJERO.X\REVISAR_CLAVE.INC 113 : Using default destination of 1 (file).
+Message[305] D:\MICROC\LAB3\CAJEROAUTO\CAJERO.X\REVISAR_CLAVE.INC 151 : Using default destination of 1 (file).
+Message[305] D:\MICROC\LAB3\CAJEROAUTO\CAJERO.X\OPCION.INC 23 : Using default destination of 1 (file).
+Message[305] D:\MICROC\LAB3\CAJEROAUTO\CAJERO.X\OPCION.INC 42 : Using default destination of 1 (file).
+Message[305] D:\MICROC\LAB3\CAJEROAUTO\CAJERO.X\CAMBIAR_CLAVE.INC 24 : Using default destination of 1 (file).
+Message[305] D:\MICROC\LAB3\CAJEROAUTO\CAJERO.X\CAMBIAR_CLAVE.INC 45 : Using default destination of 1 (file).
+Message[305] D:\MICROC\LAB3\CAJEROAUTO\CAJERO.X\CAMBIAR_CLAVE.INC 290 : Using default destination of 1 (file).
+Message[305] D:\MICROC\LAB3\CAJEROAUTO\CAJERO.X\RETIRO.INC 23 : Using default destination of 1 (file).
+Message[305] D:\MICROC\LAB3\CAJEROAUTO\CAJERO.X\RETIRO.INC 44 : Using default destination of 1 (file).
+Warning[207] D:\MICROC\LAB3\CAJEROAUTO\CAJERO.X\RETIRO.INC 99 : Found label after column 1. (FAB)
+Message[305] D:\MICROC\LAB3\CAJEROAUTO\CAJERO.X\RETIRO.INC 228 : Using default destination of 1 (file).
+Message[305] D:\MICROC\LAB3\CAJEROAUTO\CAJERO.X\SALDO.INC 19 : Using default destination of 1 (file).
+Message[305] D:\MICROC\LAB3\CAJEROAUTO\CAJERO.X\SALDO.INC 34 : Using default destination of 1 (file).
+Message[305] D:\MICROC\LAB3\CAJEROAUTO\CAJERO.X\RETARDOS.INC 241 : Using default destination of 1 (file).
+Message[305] D:\MICROC\LAB3\CAJEROAUTO\CAJERO.X\RETARDOS.INC 243 : Using default destination of 1 (file).
+Message[305] D:\MICROC\LAB3\CAJEROAUTO\CAJERO.X\RETARDOS.INC 245 : Using default destination of 1 (file).
+Warning[205] D:\MICROC\LAB3\CAJEROAUTO\CAJERO.X\CAJERO.ASM 330 : Found directive in column 1. (END)

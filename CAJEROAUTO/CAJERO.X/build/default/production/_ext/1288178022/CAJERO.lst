@@ -1,0 +1,3404 @@
+MPASM 5.65                        CAJERO.ASM   4-26-2017  10:37:34         PAGE  1
+
+
+LOC  OBJECT CODE     LINE SOURCE TEXT
+  VALUE
+
+                      00001 ;----------------------------------------------------
+                      00002     ;UNIVERSIDAD PEDAGOGICA Y TECNOLOGICA DE COLOMBIA
+                      00003     ;ESCUELA DE INGENIERIA ELECTRONICA
+                      00004     ;MICROCONTROLADORES PRIMER SEMESTRE 2017
+                      00005     ;LABORATORIO #3 CAJERO AUTOMATICO
+                      00006     ;FABIAN STEVEN ZEA GONZALEZ
+                      00007     ;201210733
+                      00008     ;JHONATAN REINALDO GOMEZ PESCA
+                      00009     ;201210146
+                      00010     
+Warning[205]: Found directive in column 1. (lIST)
+                      00011 lIST p=16f887
+                      00012 #include "p16f887.inc"
+                      00001         LIST
+                      00002 
+                      00003 ;==========================================================================
+                      00004 ; Build date : Dec 08 2015
+                      00005 ;  MPASM PIC16F887 processor include
+                      00006 ; 
+                      00007 ;  (c) Copyright 1999-2015 Microchip Technology, All rights reserved
+                      00008 ;==========================================================================
+                      00009 
+                      00810         LIST
+                      00013 
+                      00014 
+                      00015 ; CONFIG1
+                      00016 ; __config 0xEFF2
+2007   2FF2           00017  __CONFIG _CONFIG1, _FOSC_HS & _WDTE_OFF & _PWRTE_OFF & _MCLRE_ON & _CP_OFF & _CPD_OFF & _BOREN_ON & _IE
+                            SO_ON & _FCMEN_ON & _LVP_OFF 
+                      00018 ; CONFIG2
+                      00019 ; __config 0xFFFF
+2008   3FFF           00020  __CONFIG _CONFIG2, _BOR4V_BOR40V & _WRT_OFF
+                      00021  
+                      00022  CBLOCK 0X20
+  00000020            00023  REG1
+  00000021            00024  REG2
+  00000022            00025  W_V
+  00000023            00026  STATUS_V
+  00000024            00027  S_W
+  00000025            00028  S_STATUS
+  00000026            00029  TECLA
+  00000027            00030  CLAVE_0
+  00000028            00031  CLAVE_1
+  00000029            00032  CLAVE_2
+  0000002A            00033  CLAVE_3
+  0000002B            00034  CLAVEC_0
+  0000002C            00035  CLAVEC_1
+  0000002D            00036  CLAVEC_2
+  0000002E            00037  CLAVEC_3
+  0000002F            00038  ERRORR
+  00000030            00039  INTENTO
+  00000031            00040  OP
+  00000032            00041  DINERO
+MPASM 5.65                        CAJERO.ASM   4-26-2017  10:37:34         PAGE  2
+
+
+LOC  OBJECT CODE     LINE SOURCE TEXT
+  VALUE
+
+  00000033            00042  CAN
+  00000034            00043  RESTAR
+  00000035            00044  ACAMBIAR 
+  00000036            00045  DECENAS
+  00000037            00046  CENTENAS
+                      00047  ENDC
+                      00048  
+                      00049  ORG .0
+                      00050  
+0000   2???           00051     GOTO START
+                      00052 
+Warning[205]: Found directive in column 1. (ORG)
+                      00053 ORG .4
+0004   2???           00054     GOTO INTERRUPCION
+                      00055     
+                      00056 ;-------------------------------------------------------
+                      00057     ;TABLAS DE MENSAJES
+                      00058 ;-------------------------------------------------------
+0005                  00059 LIN1
+0005   0782           00060     ADDWF       PCL,1
+0006   342D 342D 3442 00061     DT  "--BIENVENIDOS---"
+       3449 3445 344E 
+       3456 3445 344E 
+       3449 3444 344F 
+       3453 342D 342D 
+       342D 
+                      00062     
+0016                  00063 LIN2
+0016   0782           00064     ADDWF       PCL,1
+0017   3449 344E 3447 00065     DT  "INGRESE LA CLAVE"  
+       3452 3445 3453 
+       3445 3420 344C 
+       3441 3420 3443 
+       344C 3441 3456 
+       3445 
+0027                  00066 LIN3
+0027   0782           00067     ADDWF       PCL,1
+0028   342A 342A 342A 00068     DT  "****   INTENTO: "
+       342A 3420 3420 
+       3420 3449 344E 
+       3454 3445 344E 
+       3454 344F 343A 
+       3420 
+0038                  00069 LIN4
+0038   0782           00070     ADDWF  PCL,1
+0039   3430           00071     RETLW  0X30
+003A   3431           00072     RETLW  0X31
+003B   3432           00073     RETLW  0X32
+003C   3433           00074     RETLW  0X33
+003D   3434           00075     RETLW  0X34
+003E   3435           00076     RETLW  0X35
+003F   3436           00077     RETLW  0X36
+0040   3437           00078     RETLW  0X37
+MPASM 5.65                        CAJERO.ASM   4-26-2017  10:37:34         PAGE  3
+
+
+LOC  OBJECT CODE     LINE SOURCE TEXT
+  VALUE
+
+0041   3438           00079     RETLW  0X38
+0042   3439           00080     RETLW  0X39
+0043   3441           00081     RETLW  0X41
+                      00082     
+0044                  00083 LIN5
+0044   0782           00084     ADDWF  PCL,1
+0045   3443 344C 3441 00085     DT  "CLAVE   CORRECTA"
+       3456 3445 3420 
+       3420 3420 3443 
+       344F 3452 3452 
+       3445 3443 3454 
+       3441 
+                      00086 
+0055                  00087 LIN6
+0055   0782           00088     ADDWF  PCL,1
+0056   3449 344E 3454 00089     DT  "INTENTO DE NUEVO"
+       3445 344E 3454 
+       344F 3420 3444 
+       3445 3420 344E 
+       3455 3445 3456 
+       344F 
+                      00090 
+0066                  00091 LIN7
+0066   0782           00092     ADDWF  PCL,1
+0067   3443 3441 344A 00093     DT  "CAJERO BLOQUEADO"
+       3445 3452 344F 
+       3420 3442 344C 
+       344F 3451 3455 
+       3445 3441 3444 
+       344F 
+0077                  00094 LIN8
+0077   0782           00095     ADDWF  PCL,1
+0078   3453 3445 342E 00096     DT  "SE.OP:  1.CA/CLA"
+       344F 3450 343A 
+       3420 3420 3431 
+       342E 3443 3441 
+       342F 3443 344C 
+       3441 
+                      00097     
+0088                  00098 LIN9
+0088   0782           00099     ADDWF  PCL,1
+0089   3432 342E 3452 00100     DT  "2.RETIRO 3.SALDO"
+       3445 3454 3449 
+       3452 344F 3420 
+       3433 342E 3453 
+       3441 344C 3444 
+       344F 
+                      00101     
+0099                  00102 LIN10
+0099   0782           00103     ADDWF  PCL,1
+009A   344F 3450 3443 00104     DT  "OPCION NO VALIDA"  
+       3449 344F 344E 
+       3420 344E 344F 
+MPASM 5.65                        CAJERO.ASM   4-26-2017  10:37:34         PAGE  4
+
+
+LOC  OBJECT CODE     LINE SOURCE TEXT
+  VALUE
+
+       3420 3456 3441 
+       344C 3449 3444 
+       3441 
+00AA                  00105 LIN11
+00AA   0782           00106     ADDWF  PCL,1
+00AB   3449 344E 3447 00107     DT  "INGRESE LA NUEVA"
+       3452 3445 3453 
+       3445 3420 344C 
+       3441 3420 344E 
+       3455 3445 3456 
+       3441 
+00BB                  00108 LIN12
+00BB   0782           00109     ADDWF  PCL,1
+00BC   3443 344C 3441 00110     DT  "CLAVE: ****     "
+       3456 3445 343A 
+       3420 342A 342A 
+       342A 342A 3420 
+       3420 3420 3420 
+       3420 
+                      00111     
+00CC                  00112 LIN13
+00CC   0782           00113     ADDWF  PCL,1
+00CD   344F 3450 3445 00114     DT  "OPERACIONEXITOSA"
+       3452 3441 3443 
+       3449 344F 344E 
+       3445 3458 3449 
+       3454 344F 3453 
+       3441 
+                      00115     
+00DD                  00116 LIN14
+00DD   0782           00117     ADDWF  PCL,1
+00DE   3420 3420 3431 00118     DT  "  1$5000 2$10000"
+       3424 3435 3430 
+       3430 3430 3420 
+       3432 3424 3431 
+       3430 3430 3430 
+       3430 
+                      00119     
+00EE                  00120 LIN15
+00EE   0782           00121     ADDWF  PCL,1
+00EF   3433 3424 3431 00122     DT  "3$15000  4$20000"   
+       3435 3430 3430 
+       3430 3420 3420 
+       3434 3424 3432 
+       3430 3430 3430 
+       3430 
+                      00123     
+                      00124 ;-------------------------------------------------------------------
+                      00125  
+Warning[207]: Found label after column 1. (START)
+00FF                  00126  START:
+                      00127  
+00FF   2???           00128     CALL   CONFIGURACION
+MPASM 5.65                        CAJERO.ASM   4-26-2017  10:37:34         PAGE  5
+
+
+LOC  OBJECT CODE     LINE SOURCE TEXT
+  VALUE
+
+0100                  00129 INICIO:     
+0100   2???           00130     CALL   INI_LCD
+0101   2???           00131     CALL   BIENVENIDOS
+                      00132 ;-------------------------------------------------
+                      00133     ;SALTA CUANDO SE OPRIME LA TECLA DE SIGUIENTE
+                      00134 ;----------------------------------------------------
+0102   30FF           00135     MOVLW   0XFF
+0103   00A6           00136     MOVWF   TECLA
+0104                  00137 LOOP:
+0104   300F           00138     MOVLW   0X0F
+0105   0626           00139     XORWF   TECLA,W
+0106   1D03           00140     BTFSS   STATUS,Z
+0107   2???           00141     GOTO    LOOP
+                      00142     
+0108   2???           00143     CALL    CLAVE
+0109   2???           00144     CALL    REVISAR_CLAVE
+                      00145     
+010A   30FF           00146     MOVLW   0XFF
+010B   00A6           00147     MOVWF   TECLA
+                      00148     
+010C   300F           00149     MOVLW   0X0F
+010D   0626           00150     XORWF   TECLA,W
+010E   1D03           00151     BTFSS   STATUS,Z
+010F   2???           00152     GOTO    $-3
+0110   2???           00153     CALL    OPCION
+                      00154 
+                      00155   
+                      00156     
+                      00157 ;---------------------------
+                      00158     ;RUTINA DE INTERRUPCION PARA EL TECLADO
+                      00159 ;---------------------------
+Warning[207]: Found label after column 1. (INTERRUPCION)
+0111                  00160  INTERRUPCION:
+0111   138B           00161     BCF     INTCON,GIE    ;DESABILITA INTERRUPCIONES
+0112   2???           00162     CALL    PUSH
+0113   1C0B           00163     BTFSS   INTCON,0      
+0114   2???           00164     GOTO    UN
+0115   30F0           00165     MOVLW   0XF0
+0116   0086           00166     MOVWF   PORTB
+0117   2???           00167     CALL    Retardo_5ms
+0118   30F0           00168     MOVLW   0XF0
+0119   0606           00169     XORWF   PORTB,W
+011A   1D03           00170     BTFSS   STATUS,Z
+011B   2???           00171     CALL    TECLADO
+                      00172   
+                      00173 ;---------------------------
+                      00174     ;DESACTIVA INTERRUPCIONES GLOBALES
+                      00175 ;---------------------------
+                      00176     
+011C                  00177 UN:
+011C   30F0           00178     MOVLW 0XF0
+011D   0086           00179     MOVWF PORTB
+011E   100B           00180     BCF   INTCON,0
+MPASM 5.65                        CAJERO.ASM   4-26-2017  10:37:34         PAGE  6
+
+
+LOC  OBJECT CODE     LINE SOURCE TEXT
+  VALUE
+
+011F   2???           00181     CALL POP
+0120   0009           00182     RETFIE
+                      00183     
+                      00184 ;---------------------------
+                      00185     ;GUARDA LOS DATOS EN LOS REGISTROS W Y REGISTROS STATUS
+                      00186 ;---------------------------
+0121                  00187 PUSH:
+0121   00A2           00188     MOVWF  W_V
+0122   0803           00189     MOVF   STATUS,W
+0123   00A3           00190     MOVWF  STATUS_V
+0124   0008           00191     RETURN
+0125                  00192 POP:
+0125   0822           00193     MOVF   W_V,W
+0126   0823           00194     MOVF   STATUS_V,W
+0127   0083           00195     MOVWF  STATUS
+0128   0008           00196     RETURN
+0129                  00197 TECLADO:
+                      00198 ;---------------------------------
+                      00199      ;VERIFICA COLUMNA 1  DERECHA - IZQUIERDA 
+                      00200 ;---------------------------------
+0129   30FE           00201     MOVLW  0XFE
+012A   0086           00202     MOVWF  PORTB
+                      00203     
+012B   1B86           00204     BTFSC  PORTB,7
+012C   2???           00205     GOTO   $+4
+012D   300F           00206     MOVLW  0X0F
+012E   00A6           00207     MOVWF  TECLA
+012F   0008           00208     RETURN
+                      00209     
+0130   1B06           00210     BTFSC  PORTB,6
+0131   2???           00211     GOTO   $+4
+0132   300B           00212     MOVLW  0X0B
+0133   00A6           00213     MOVWF  TECLA
+0134   0008           00214     RETURN
+                      00215     
+0135   1A86           00216     BTFSC  PORTB,5
+0136   2???           00217     GOTO   $+4
+0137   300C           00218     MOVLW  0X0C
+0138   00A6           00219     MOVWF  TECLA
+0139   0008           00220     RETURN
+                      00221     
+013A   1A06           00222     BTFSC  PORTB,4
+013B   2???           00223     GOTO   $+4
+013C   300D           00224     MOVLW  0X0D
+013D   00A6           00225     MOVWF  TECLA
+013E   0008           00226     RETURN
+                      00227 ;---------------------------------
+                      00228      ;VERIFICA COLUMNA 2  DERECHA - IZQUIERDA   
+                      00229 ;---------------------------------
+013F   30FD           00230     MOVLW  0XFD
+0140   0086           00231     MOVWF  PORTB
+                      00232     
+0141   1B86           00233     BTFSC  PORTB,7
+MPASM 5.65                        CAJERO.ASM   4-26-2017  10:37:34         PAGE  7
+
+
+LOC  OBJECT CODE     LINE SOURCE TEXT
+  VALUE
+
+0142   2???           00234     GOTO   $+4
+0143   3003           00235     MOVLW  0X03
+0144   00A6           00236     MOVWF  TECLA
+0145   0008           00237     RETURN
+                      00238     
+0146   1B06           00239     BTFSC  PORTB,6
+0147   2???           00240     GOTO   $+4
+0148   3006           00241     MOVLW  0X06
+0149   00A6           00242     MOVWF  TECLA
+014A   0008           00243     RETURN
+                      00244     
+014B   1A86           00245     BTFSC  PORTB,5
+014C   2???           00246     GOTO   $+4
+014D   3009           00247     MOVLW  0X09
+014E   00A6           00248     MOVWF  TECLA
+014F   0008           00249     RETURN
+                      00250     
+0150   1A06           00251     BTFSC  PORTB,4
+0151   2???           00252     GOTO   $+4
+0152   300A           00253     MOVLW  0X0A
+0153   00A6           00254     MOVWF  TECLA
+0154   0008           00255     RETURN
+                      00256 ;---------------------------------
+                      00257      ;VERIFICA COLUMNA 3  DERECHA - IZQUIERDA 
+                      00258 ;---------------------------------
+0155   30FB           00259     MOVLW  0XFB
+0156   0086           00260     MOVWF  PORTB
+                      00261     
+0157   1B86           00262     BTFSC  PORTB,7
+0158   2???           00263     GOTO   $+4
+0159   3002           00264     MOVLW  0X02
+015A   00A6           00265     MOVWF  TECLA
+015B   0008           00266     RETURN
+                      00267     
+015C   1B06           00268     BTFSC  PORTB,6
+015D   2???           00269     GOTO   $+4
+015E   3005           00270     MOVLW  0X05
+015F   00A6           00271     MOVWF  TECLA
+0160   0008           00272     RETURN
+                      00273     
+0161   1A86           00274     BTFSC  PORTB,5
+0162   2???           00275     GOTO   $+4
+0163   3008           00276     MOVLW  0X08
+0164   00A6           00277     MOVWF  TECLA
+0165   0008           00278     RETURN
+                      00279     
+0166   1A06           00280     BTFSC  PORTB,4
+0167   2???           00281     GOTO   $+4
+0168   3000           00282     MOVLW  0X00
+0169   00A6           00283     MOVWF  TECLA
+016A   0008           00284     RETURN
+                      00285 ;---------------------------------
+                      00286      ;VERIFICA COLUMNA 4  DERECHA - IZQUIERDA 
+MPASM 5.65                        CAJERO.ASM   4-26-2017  10:37:34         PAGE  8
+
+
+LOC  OBJECT CODE     LINE SOURCE TEXT
+  VALUE
+
+                      00287 ;---------------------------------
+016B   30F7           00288     MOVLW  0XF7
+016C   0086           00289     MOVWF  PORTB
+                      00290     
+016D   1B86           00291     BTFSC  PORTB,7
+016E   2???           00292     GOTO   $+4
+016F   3001           00293     MOVLW  0X01
+0170   00A6           00294     MOVWF  TECLA
+0171   0008           00295     RETURN
+                      00296     
+0172   1B06           00297     BTFSC  PORTB,6
+0173   2???           00298     GOTO   $+4
+0174   3004           00299     MOVLW  0X04
+0175   00A6           00300     MOVWF  TECLA
+0176   0008           00301     RETURN
+                      00302     
+0177   1A86           00303     BTFSC  PORTB,5
+0178   2???           00304     GOTO   $+4
+0179   3007           00305     MOVLW  0X07
+017A   00A6           00306     MOVWF  TECLA
+017B   0008           00307     RETURN
+                      00308     
+017C   1A06           00309     BTFSC  PORTB,4
+017D   2???           00310     GOTO   $+4
+017E   300E           00311     MOVLW  0X0E
+017F   00A6           00312     MOVWF  TECLA
+0180   0008           00313     RETURN
+                      00314 
+                      00315                 
+                      00316 ;--------------------------------------
+                      00317     ;LIBRERIAS .INC
+                      00318 ;-----------------------------------
+                      00319 #INCLUDE "CONFIGURACION.inc"
+                      00001 ;--------------------------------------
+                      00002     ;CONFIGURACION DE PUERTOS Y DE BOTON PARA EL PUERTO B
+                      00003 ;--------------------------------------
+0181                  00004 CONFIGURACION:
+0181   1683 1303      00005   BANKSEL  OSCCON
+0183   30F1           00006   MOVLW    0XF1
+Message[302]: Register in operand not in bank 0.  Ensure that bank bits are correct.
+0184   008F           00007   MOVWF    OSCCON
+0185   30F0           00008   MOVLW    0XF0
+Message[302]: Register in operand not in bank 0.  Ensure that bank bits are correct.
+0186   0086           00009   MOVWF    TRISB
+Message[302]: Register in operand not in bank 0.  Ensure that bank bits are correct.
+0187   0187           00010   CLRF     TRISC
+Message[302]: Register in operand not in bank 0.  Ensure that bank bits are correct.
+0188   0189           00011   CLRF     TRISE
+0189   1683 1703      00012   BANKSEL  ANSELH
+Message[302]: Register in operand not in bank 0.  Ensure that bank bits are correct.
+018B   0189           00013   CLRF     ANSELH
+Message[302]: Register in operand not in bank 0.  Ensure that bank bits are correct.
+018C   0188           00014   CLRF     ANSEL
+MPASM 5.65                        CAJERO.ASM   4-26-2017  10:37:34         PAGE  9
+
+
+LOC  OBJECT CODE     LINE SOURCE TEXT
+  VALUE
+
+018D   178B           00015   BSF      INTCON,7
+018E   158B           00016   BSF      INTCON,3
+018F   1683 1303      00017   BANKSEL  OPTION_REG
+Message[302]: Register in operand not in bank 0.  Ensure that bank bits are correct.
+0191   1381           00018   BCF      OPTION_REG,7
+0192   1683 1303      00019   BANKSEL  WPUB
+0194   30F0           00020   MOVLW    0XF0
+Message[302]: Register in operand not in bank 0.  Ensure that bank bits are correct.
+0195   0095           00021   MOVWF    WPUB
+Message[302]: Register in operand not in bank 0.  Ensure that bank bits are correct.
+0196   0096           00022   MOVWF    IOCB
+0197   1283 1303      00023   BANKSEL  PORTA
+0199   30F0           00024   MOVLW    0XF0
+019A   0086           00025   MOVWF    PORTB
+019B   0187           00026   CLRF     PORTC
+019C   0189           00027   CLRF     PORTE
+019D   01A6           00028   CLRF     TECLA
+                      00029   
+                      00030   
+                      00031 ;-------------------------------------------------
+                      00032     ;ASIGNA VALORES INICIALES A LOS CUATRO DIGITOS DE LA CLAVE
+                      00033 ;----------------------------------------------------
+019E   3000           00034     MOVLW  0X00
+019F   00AB           00035     MOVWF  CLAVEC_0
+01A0   3001           00036     MOVLW  0X01
+01A1   00AC           00037     MOVWF  CLAVEC_1
+01A2   3002           00038     MOVLW  0X02
+01A3   00AD           00039     MOVWF  CLAVEC_2
+01A4   3003           00040     MOVLW  0X03
+01A5   00AE           00041     MOVWF  CLAVEC_3
+                      00042     
+01A6   30C8           00043     MOVLW  0XC8 
+01A7   00B2           00044     MOVWF  DINERO
+01A8   0008           00045     RETURN
+                      00320 #INCLUDE "INI_LCD.inc"
+                      00001 
+                      00002     ;-------------------------------------------------
+                      00003     ;CONFIGURACION DE LA LCD 
+                      00004 ;----------------------------------------------------
+01A9                  00005 INI_LCD:
+01A9   01A0           00006     CLRF    REG1
+01AA   2???           00007     CALL    Retardo_5ms
+                      00008     
+01AB   3038           00009     MOVLW   0X38                        ;COMUNICACION A 8 BITS DOS LINEAS FUENTE 5X7
+01AC   00A0           00010     MOVWF   REG1
+01AD   2???           00011     CALL    COMAND8
+                      00012     
+01AE   300D           00013     MOVLW   0x0D
+01AF   00A0           00014     MOVWF   REG1
+01B0   2???           00015     CALL    COMAND8                     ;ACTIVA DISPLAY
+                      00016 
+01B1   3006           00017     MOVLW   0X06                        ;NO SE DESPLAZA, APUNTADOR SE INCREMENTA CON NUEVA ESCRITURA DE 
+                            DATO
+MPASM 5.65                        CAJERO.ASM   4-26-2017  10:37:34         PAGE 10
+
+
+LOC  OBJECT CODE     LINE SOURCE TEXT
+  VALUE
+
+01B2   00A0           00018     MOVWF   REG1
+01B3   2???           00019     CALL    COMAND8     
+                      00020 
+01B4   3001           00021     MOVLW   0X01                        ;BORRA Y REGRESA A CERO
+01B5   00A0           00022     MOVWF   REG1
+01B6   2???           00023     CALL    COMAND8
+                      00024    
+Warning[203]: Found opcode in column 1. (RETURN)
+01B7   0008           00025 RETURN
+                      00026 
+                      00027 ;-------------------------------------------------
+                      00028     ;RUTINA PARA ENVIO DE COMANDOS A LA LCD
+                      00029 ;----------------------------------------------------
+01B8                  00030 COMAND8
+01B8   1009           00031         BCF     PORTE,0
+01B9   2???           00032         GOTO    $+2
+                      00033         
+                      00034 ;-------------------------------------------------
+                      00035     ;RUTINA PARA ENVIO DE DATOS A LA LCD
+                      00036 ;----------------------------------------------------
+01BA                  00037 DATO8
+01BA   1409           00038         BSF     PORTE,0
+01BB   0820           00039         MOVF    REG1,W
+01BC   0087           00040         MOVWF   PORTC
+01BD   1489           00041         BSF     PORTE,1
+01BE   2???           00042         CALL    Retardo_50ms
+01BF   1089           00043         BCF     PORTE,1
+01C0   2???           00044         CALL    Retardo_50ms
+01C1   0008           00045         RETURN
+                      00046 
+                      00047 
+                      00048 
+                      00049 
+                      00050 
+                      00051 
+                      00321 #INCLUDE "BIENVENIDOS.inc"
+                      00001 
+01C2                  00002 BIENVENIDOS:
+01C2   01AF           00003     CLRF   ERRORR
+01C3   01A1           00004     CLRF   REG2
+                      00005     
+01C4   3001           00006     MOVLW  0X01
+01C5   00B0           00007     MOVWF  INTENTO
+                      00008     
+                      00009     
+                      00010 ;-------------------------------------------------
+                      00011     ;MUESTRA EL MENSAJE DE BIENVENIDOS EN LA FILA DE ARRIBA
+                      00012 ;----------------------------------------------------
+01C6                  00013 LINEA1:
+01C6   0821           00014     MOVF    REG2,W
+01C7   2???           00015     CALL    LIN1
+01C8   00A0           00016     MOVWF   REG1
+01C9   2???           00017     CALL    DATO8
+MPASM 5.65                        CAJERO.ASM   4-26-2017  10:37:34         PAGE 11
+
+
+LOC  OBJECT CODE     LINE SOURCE TEXT
+  VALUE
+
+Message[305]: Using default destination of 1 (file).
+01CA   0AA1           00018     INCF    REG2
+01CB   1E21           00019     BTFSS   REG2,4
+01CC   2???           00020     GOTO    LINEA1
+01CD   0008           00021     RETURN
+                      00022     
+                      00023 
+                      00024 
+                      00025 
+                      00322 #INCLUDE "CLAVE.inc"
+01CE                  00001 CLAVE:
+                      00002     
+                      00003 ;-------------------------------------------------
+                      00004     ;BORRA Y REGRESA A CERO
+                      00005 ;----------------------------------------------------
+01CE   3001           00006     MOVLW   0X01                        ;BORRA Y REGRESA A CERO
+01CF   00A0           00007     MOVWF   REG1
+01D0   2???           00008     CALL    COMAND8
+01D1   01A1           00009     CLRF    REG2
+                      00010 ;-------------------------------------------------
+                      00011     ;MUESTRA MENSAJE DE INGRESE CONTRASEÑA
+                      00012 ;----------------------------------------------------
+01D2                  00013 LINEA2:
+01D2   01A0           00014     CLRF    REG1
+01D3   0821           00015     MOVF    REG2,W
+01D4   2???           00016     CALL    LIN2
+01D5   00A0           00017     MOVWF   REG1
+01D6   2???           00018     CALL    DATO8
+Message[305]: Using default destination of 1 (file).
+01D7   0AA1           00019     INCF    REG2
+01D8   1E21           00020     BTFSS   REG2,4
+01D9   2???           00021     GOTO    LINEA2
+                      00022 ;-------------------------------------------------
+                      00023     ;APUNTADOR A LINEA 2 POSICION CERO
+                      00024 ;----------------------------------------------------
+                      00025 
+01DA   30C0           00026     MOVLW   0XC0        
+01DB   00A0           00027     MOVWF   REG1
+01DC   2???           00028     CALL    COMAND8
+01DD   01A1           00029     CLRF    REG2
+01DE   01A0           00030     CLRF    REG1
+                      00031  
+                      00032 ;-------------------------------------------------
+                      00033     ;MUESTRA EL NUMERO DE VECES QUE SE HA INTRODUCIDO LA CONTRASEÑA  **** EN LA FILA 2
+                      00034 ;----------------------------------------------------
+01DF                  00035 LINEA3:
+01DF   0821           00036     MOVF    REG2,W
+01E0   2???           00037     CALL    LIN3
+01E1   00A0           00038     MOVWF   REG1 
+01E2   2???           00039     CALL    DATO8
+Message[305]: Using default destination of 1 (file).
+01E3   0AA1           00040     INCF    REG2
+01E4   1E21           00041     BTFSS   REG2,4
+MPASM 5.65                        CAJERO.ASM   4-26-2017  10:37:34         PAGE 12
+
+
+LOC  OBJECT CODE     LINE SOURCE TEXT
+  VALUE
+
+01E5   2???           00042     GOTO    LINEA3
+                      00043     
+01E6   30CF           00044     MOVLW   0XCF        ;APUNTADOR A LINEA 2 POSICION CERO
+01E7   00A0           00045     MOVWF   REG1
+01E8   2???           00046     CALL    COMAND8
+                      00047     
+01E9   0830           00048     MOVF    INTENTO,W
+01EA   2???           00049     CALL    LIN4
+01EB   00A0           00050     MOVWF   REG1 
+01EC   2???           00051     CALL    DATO8
+                      00052 
+                      00053 ;-------------------------------------------------
+                      00054     ;APUNTADOR A LINEA 2 POSICION 0
+                      00055 ;----------------------------------------------------    
+01ED   30C0           00056     MOVLW   0XC0        
+01EE   00A0           00057     MOVWF   REG1
+01EF   2???           00058     CALL    COMAND8
+                      00059 
+                      00060 ;-------------------------------------------------
+                      00061     ;SALTA CUANDO SE OPRIMA UNA TECLA DEL TECLADO
+                      00062 ;----------------------------------------------------  
+01F0                  00063 BOR_1:    
+01F0   30FF           00064     MOVLW   0XFF
+01F1   00A6           00065     MOVWF   TECLA
+01F2                  00066 REP1:  
+01F2   30FF           00067     MOVLW   0XFF
+01F3   0626           00068     XORWF   TECLA,W
+01F4   1903           00069     BTFSC   STATUS,Z
+01F5   2???           00070     GOTO    REP1  
+                      00071  ;-------------------------------------------------
+                      00072     ;RUTINA QUE PERMITE COMPROBAR QUE LA TECLA QUE SE HALLA ORPIMIDO NO SEA DIFERENTE A LA DE UN NUMERO
+                      00073 ;----------------------------------------------------     
+01F6   300A           00074     MOVLW   0X0A
+01F7   0226           00075     SUBWF   TECLA,W
+01F8   1803           00076     BTFSC   STATUS,C
+01F9   2???           00077     GOTO    BOR_1
+                      00078     
+                      00079 ;-------------------------------------------------
+                      00080     ;GUARDA EL VALOR DE LA TECLA EN EL PRIMER DIGITO DE LA CLAVE Y MUESTRA EL NUMERO EN LA LCD
+                      00081 ;---------------------------------------------------- 
+                      00082     
+01FA   0826           00083     MOVF    TECLA,W
+01FB   00A7           00084     MOVWF   CLAVE_0
+01FC   2???           00085     CALL    LIN4
+01FD   00A0           00086     MOVWF   REG1
+01FE   2???           00087     CALL    DATO8
+                      00088 
+                      00089 ;-------------------------------------------------
+                      00090     ;SALTA CUANDO SE OPRIMA UNA TECLA DEL TECLADO
+                      00091 ;---------------------------------------------------- 
+01FF                  00092 BOR_2: 
+01FF   30FF           00093     MOVLW   0XFF
+0200   00A6           00094     MOVWF   TECLA
+MPASM 5.65                        CAJERO.ASM   4-26-2017  10:37:34         PAGE 13
+
+
+LOC  OBJECT CODE     LINE SOURCE TEXT
+  VALUE
+
+0201                  00095 REP2: 
+0201   30FF           00096     MOVLW   0XFF
+0202   0626           00097     XORWF   TECLA,W
+0203   1903           00098     BTFSC   STATUS,Z
+0204   2???           00099     GOTO    REP2   
+                      00100     
+                      00101 ;-------------------------------------------------
+                      00102     ;RETORNA A PEDIR EL PRIMER DIGITO SI SE OPRIME LA TECLA DE BORRAR
+                      00103     ;SI SE OPRIME LA TECLA INICIO REINICIA EL PROGRAMA
+                      00104 ;----------------------------------------------------  
+0205   300D           00105     MOVLW   0X0D
+0206   0626           00106     XORWF   TECLA,W
+0207   1903           00107     BTFSC   STATUS,Z
+0208   2???           00108     GOTO    INICIO
+                      00109     
+0209   300B           00110     MOVLW   0X0B
+020A   0626           00111     XORWF   TECLA,W
+020B   1D03           00112     BTFSS   STATUS,Z
+020C   2???           00113     GOTO    TECLA2 
+                      00114     
+020D   3010           00115     MOVLW   0X10        ;APUNTADOR A LINEA 2 POSICION CERO
+020E   00A0           00116     MOVWF   REG1
+020F   2???           00117     CALL    COMAND8
+0210   2???           00118     GOTO    BOR_1
+                      00119     
+                      00120  ;-------------------------------------------------
+                      00121     ;RUTINA QUE PERMITE COMPROBAR QUE LA TECLA QUE SE HALLA ORPIMIDO NO SEA DIFERENTE A LA DE UN NUMERO
+                      00122 ;----------------------------------------------------     
+0211                  00123 TECLA2:  
+0211   300A           00124     MOVLW   0X0A
+0212   0226           00125     SUBWF   TECLA,W
+0213   1803           00126     BTFSC   STATUS,C
+0214   2???           00127     GOTO    BOR_2
+                      00128 
+                      00129 
+                      00130 ;-------------------------------------------------
+                      00131     ;GUARDA EL VALOR DE LA TECLA EN EL SEGUNDO DIGITO DE LA CLAVE Y MUESTRA EL NUMERO EN LA LCD
+                      00132 ;---------------------------------------------------- 
+                      00133  
+                      00134    
+0215   0826           00135     MOVF    TECLA,W
+0216   00A8           00136     MOVWF   CLAVE_1
+0217   2???           00137     CALL    LIN4
+0218   00A0           00138     MOVWF   REG1
+0219   2???           00139     CALL    DATO8
+                      00140  
+                      00141 ;-------------------------------------------------
+                      00142     ;SALTA CUANDO SE OPRIMA UNA TECLA DEL TECLADO
+                      00143 ;---------------------------------------------------- 
+021A                  00144 BOR_3:  
+021A   30FF           00145     MOVLW   0XFF
+021B   00A6           00146     MOVWF   TECLA
+021C                  00147 REP3:
+MPASM 5.65                        CAJERO.ASM   4-26-2017  10:37:34         PAGE 14
+
+
+LOC  OBJECT CODE     LINE SOURCE TEXT
+  VALUE
+
+021C   30FF           00148     MOVLW   0XFF
+021D   0626           00149     XORWF   TECLA,W
+021E   1903           00150     BTFSC   STATUS,Z
+021F   2???           00151     GOTO    REP3
+                      00152     
+                      00153 ;-------------------------------------------------
+                      00154     ;RETORNA A PEDIR EL SEGUNDO DIGITO SI SE OPRIME LA TECLA DE BORRAR
+                      00155     ;SI SE OPRIME LA TECLA INICIO REINICIA EL PROGRAMA
+                      00156 ;----------------------------------------------------     
+0220   300D           00157     MOVLW   0X0D
+0221   0626           00158     XORWF   TECLA,W
+0222   1903           00159     BTFSC   STATUS,Z
+0223   2???           00160     GOTO    INICIO
+                      00161     
+0224   300B           00162     MOVLW   0X0B
+0225   0626           00163     XORWF   TECLA,W
+0226   1D03           00164     BTFSS   STATUS,Z
+0227   2???           00165     GOTO    TECLA_3 
+                      00166     
+0228   3010           00167     MOVLW   0X10        ;APUNTADOR A LINEA 2 POSICION CERO
+0229   00A0           00168     MOVWF   REG1
+022A   2???           00169     CALL    COMAND8
+022B   2???           00170     GOTO    BOR_2
+                      00171     
+                      00172 ;-------------------------------------------------
+                      00173     ;RUTINA QUE PERMITE COMPROBAR QUE LA TECLA QUE SE HALLA ORPIMIDO NO SEA DIFERENTE A LA DE UN NUMERO
+                      00174 ;----------------------------------------------------     
+022C                  00175 TECLA_3:
+022C   300A           00176     MOVLW   0X0A
+022D   0226           00177     SUBWF   TECLA,W
+022E   1803           00178     BTFSC   STATUS,C
+022F   2???           00179     GOTO    BOR_3
+                      00180 
+                      00181 
+                      00182 ;-------------------------------------------------
+                      00183     ;GUARDA EL VALOR DE LA TECLA EN EL TERCER DIGITO DE LA CLAVE Y MUESTRA EL NUMERO EN LA LCD
+                      00184 ;----------------------------------------------------
+                      00185     
+0230   0826           00186     MOVF    TECLA,W
+0231   00A9           00187     MOVWF   CLAVE_2
+0232   2???           00188     CALL    LIN4
+0233   00A0           00189     MOVWF   REG1
+0234   2???           00190     CALL    DATO8
+                      00191 
+                      00192 ;-------------------------------------------------
+                      00193     ;SALTA CUANDO SE OPRIMA UNA TECLA DEL TECLADO
+                      00194 ;---------------------------------------------------- 
+0235                  00195 BOR_4:  
+0235   30FF           00196     MOVLW   0XFF
+0236   00A6           00197     MOVWF   TECLA
+0237                  00198 REP4:
+0237   30FF           00199     MOVLW   0XFF
+0238   0626           00200     XORWF   TECLA,W
+MPASM 5.65                        CAJERO.ASM   4-26-2017  10:37:34         PAGE 15
+
+
+LOC  OBJECT CODE     LINE SOURCE TEXT
+  VALUE
+
+0239   1903           00201     BTFSC   STATUS,Z
+023A   2???           00202     GOTO    REP4
+                      00203 ;-------------------------------------------------
+                      00204     ;RETORNA A PEDIR EL TERCER DIGITO SI SE OPRIME LA TECLA DE BORRAR 
+                      00205     ;SI SE OPRIME LA TECLA INICIO REINICIA EL PROGRAMA
+                      00206 ;---------------------------------------------------- 
+023B   300D           00207     MOVLW   0X0D
+023C   0626           00208     XORWF   TECLA,W
+023D   1903           00209     BTFSC   STATUS,Z
+023E   2???           00210     GOTO    INICIO
+                      00211     
+023F   300B           00212     MOVLW   0X0B
+0240   0626           00213     XORWF   TECLA,W
+0241   1D03           00214     BTFSS   STATUS,Z
+0242   2???           00215     GOTO    TECLA_4 
+                      00216     
+0243   3010           00217     MOVLW   0X10        ;APUNTADOR A LINEA 2 POSICION CERO
+0244   00A0           00218     MOVWF   REG1
+0245   2???           00219     CALL    COMAND8
+0246   2???           00220     GOTO    BOR_3    
+                      00221 ;-------------------------------------------------
+                      00222     ;RUTINA QUE PERMITE COMPROBAR QUE LA TECLA QUE SE HALLA ORPIMIDO NO SEA DIFERENTE A LA DE UN NUMERO
+                      00223 ;----------------------------------------------------     
+0247                  00224 TECLA_4:
+0247   300A           00225     MOVLW   0X0A
+0248   0226           00226     SUBWF   TECLA,W
+0249   1803           00227     BTFSC   STATUS,C
+024A   2???           00228     GOTO    BOR_4
+                      00229 
+                      00230 
+                      00231  
+                      00232 ;-------------------------------------------------
+                      00233     ;GUARDA EL VALOR DE LA TECLA EN EL CUARTO DIGITO DE LA CLAVE Y MUESTRA EL NUMERO EN LA LCD
+                      00234 ;----------------------------------------------------
+                      00235     
+024B   0826           00236     MOVF    TECLA,W
+024C   00AA           00237     MOVWF   CLAVE_3
+024D   2???           00238     CALL    LIN4
+024E   00A0           00239     MOVWF   REG1
+024F   2???           00240     CALL    DATO8
+                      00241     
+                      00242   
+                      00243 ;-------------------------------------------------
+                      00244     ;SALTA CUANDO SE OPRIMA UNA TECLA DEL TECLADO
+                      00245 ;---------------------------------------------------- 
+0250                  00246 BOR_5:
+0250   30FF           00247     MOVLW   0XFF
+0251   00A6           00248     MOVWF   TECLA
+0252                  00249 REP5:
+0252   30FF           00250     MOVLW   0XFF
+0253   0626           00251     XORWF   TECLA,W
+0254   1903           00252     BTFSC   STATUS,Z
+0255   2???           00253     GOTO    REP5
+MPASM 5.65                        CAJERO.ASM   4-26-2017  10:37:34         PAGE 16
+
+
+LOC  OBJECT CODE     LINE SOURCE TEXT
+  VALUE
+
+                      00254 ;-------------------------------------------------
+                      00255     ;RETORNA A PEDIR EL TERCER DIGITO SI SE OPRIME LA TECLA DE BORRAR
+                      00256     ;SI SE OPRIME LA TECLA INICIO REINICIA EL PROGRAMA
+                      00257 ;----------------------------------------------------     
+0256   300D           00258     MOVLW   0X0D
+0257   0626           00259     XORWF   TECLA,W
+0258   1903           00260     BTFSC   STATUS,Z
+0259   2???           00261     GOTO    INICIO
+                      00262     
+025A   300B           00263     MOVLW   0X0B
+025B   0626           00264     XORWF   TECLA,W
+025C   1D03           00265     BTFSS   STATUS,Z
+025D   2???           00266     GOTO    SALIRA
+                      00267     
+025E   3010           00268     MOVLW   0X10        ;APUNTADOR A LINEA 2 POSICION CERO
+025F   00A0           00269     MOVWF   REG1
+0260   2???           00270     CALL    COMAND8
+0261   2???           00271     GOTO    BOR_4
+                      00272 ;-------------------------------------------------
+                      00273     ;TERMINA LA RUTINA CUANDO SE OPRIME LA TECLA ENTER Y RETORNA A LA FUNCION PRINCIPAL
+                      00274     ;SI SE OPRIME LA TECLA INICIO REINICIA EL PROGRAMA
+                      00275 ;---------------------------------------------------- 
+0262                  00276 SALIRA:   
+0262   300D           00277     MOVLW   0X0D
+0263   0626           00278     XORWF   TECLA,W
+0264   1903           00279     BTFSC   STATUS,Z
+0265   2???           00280     GOTO    INICIO
+0266   300F           00281     MOVLW   0X0F
+0267   0626           00282     XORWF   TECLA,W
+0268   1D03           00283     BTFSS   STATUS,Z
+0269   2???           00284     GOTO    BOR_5
+026A   0008           00285     RETURN
+                      00286     
+                      00287     
+                      00288  
+                      00289     
+                      00290 
+                      00291     
+                      00292     
+                      00293 
+                      00294 
+                      00323 #INCLUDE "REVISAR_CLAVE.inc"
+                      00001 ;-------------------------------------------------
+                      00002     ;RUTINA UTLIZADA PARA COMPROBAR SI LA CONTRASEÑA ES CORRECTA
+                      00003     ;Y COMPRUEBA SI LA CONTRASEÑA ES INGRESADA MAL 4 VECES PARA BLOQUEAR EL CAJERO
+                      00004 ;----------------------------------------------------
+                      00005     
+026B                  00006 REVISAR_CLAVE:
+026B   01A0           00007     CLRF   REG1
+026C   01A1           00008     CLRF   REG2
+                      00009 ;-------------------------------------------------
+                      00010     ;COMPRUEBA DIGITO A DIGITO SI LA CLAVE ES CORRECTA
+                      00011 ;----------------------------------------------------
+MPASM 5.65                        CAJERO.ASM   4-26-2017  10:37:34         PAGE 17
+
+
+LOC  OBJECT CODE     LINE SOURCE TEXT
+  VALUE
+
+026D                  00012 DIGITO0:
+026D   0827           00013     MOVF  CLAVE_0,W
+026E   062B           00014     XORWF CLAVEC_0,W
+026F   1D03           00015     BTFSS STATUS,Z
+0270   2???           00016     GOTO  MAL
+                      00017     
+0271                  00018 DIGITO1:
+0271   0828           00019     MOVF  CLAVE_1,W
+0272   062C           00020     XORWF CLAVEC_1,W
+0273   1D03           00021     BTFSS STATUS,Z
+0274   2???           00022     GOTO  MAL   
+                      00023 
+0275                  00024 DIGITO2:
+0275   0829           00025     MOVF  CLAVE_2,W
+0276   062D           00026     XORWF CLAVEC_2,W
+0277   1D03           00027     BTFSS STATUS,Z
+0278   2???           00028     GOTO  MAL 
+                      00029     
+0279                  00030 DIGITO3:
+0279   082A           00031     MOVF  CLAVE_3,W
+027A   062E           00032     XORWF CLAVEC_3,W
+027B   1D03           00033     BTFSS STATUS,Z
+027C   2???           00034     GOTO  MAL
+                      00035 
+027D   3001           00036     MOVLW   0X01                        ;BORRA Y REGRESA A CERO
+027E   00A0           00037     MOVWF   REG1
+027F   2???           00038     CALL    COMAND8
+0280   01A1           00039     CLRF    REG2
+                      00040 ;-------------------------------------------------
+                      00041     ;SI LA CONTRASEÑA ES CORRECTA MUESTRA EL MENSAJE CONFIRMANDOLO
+                      00042     ;LINEA 1
+                      00043 ;----------------------------------------------------
+0281                  00044 LINEA5:
+0281   01A0           00045     CLRF    REG1
+0282   0821           00046     MOVF    REG2,W
+0283   2???           00047     CALL    LIN5
+0284   00A0           00048     MOVWF   REG1
+0285   2???           00049     CALL    DATO8
+Message[305]: Using default destination of 1 (file).
+0286   0AA1           00050     INCF    REG2
+0287   1E21           00051     BTFSS   REG2,4
+0288   2???           00052     GOTO    LINEA5
+                      00053 
+                      00054 
+Warning[203]: Found opcode in column 1. (RETURN)
+0289   0008           00055 RETURN
+                      00056  ;-------------------------------------------------
+                      00057     ;CONTRASEÑA ES INCORRECTA AUMENTA EL REGISTRO ERROR
+                      00058     ;COMPRUEBA SI HAN INGRESADO LA CONTRASEÑA MAL 4 VECES
+                      00059 ;----------------------------------------------------     
+028A                  00060 MAL:
+Message[305]: Using default destination of 1 (file).
+028A   0AB0           00061     INCF   INTENTO
+MPASM 5.65                        CAJERO.ASM   4-26-2017  10:37:34         PAGE 18
+
+
+LOC  OBJECT CODE     LINE SOURCE TEXT
+  VALUE
+
+Message[305]: Using default destination of 1 (file).
+028B   0AAF           00062     INCF   ERRORR
+028C   3004           00063     MOVLW  0X04
+028D   062F           00064     XORWF  ERRORR,W
+028E   1903           00065     BTFSC  STATUS,Z
+028F   2???           00066     GOTO   BLOQUEO
+                      00067     
+0290   3001           00068     MOVLW   0X01                        ;BORRA Y REGRESA A CERO
+0291   00A0           00069     MOVWF   REG1
+0292   2???           00070     CALL    COMAND8
+0293   01A1           00071     CLRF    REG2
+0294   01A0           00072     CLRF    REG1
+                      00073 ;-------------------------------------------------
+                      00074     ;MUESTRA EL MENSAJE DE CONTRASEÑA INCORRECTA;
+                      00075     ;EN LA PRIMERA LINEA
+                      00076 ;---------------------------------------------------- 
+0295                  00077 LINEAS5:
+                      00078     
+0295   0821           00079     MOVF    REG2,W
+0296   2???           00080     CALL    LIN5
+0297   00A0           00081     MOVWF   REG1
+0298   2???           00082     CALL    DATO8
+Message[305]: Using default destination of 1 (file).
+0299   0AA1           00083     INCF    REG2
+029A   1E21           00084     BTFSS   REG2,4
+029B   2???           00085     GOTO    LINEAS5
+                      00086     
+029C   3086           00087     MOVLW   0X86        ;APUNTADOR A LINEA 2 POSICION CERO
+029D   00A0           00088     MOVWF   REG1
+029E   2???           00089     CALL    COMAND8
+                      00090     
+029F   3049           00091     MOVLW   0X49
+02A0   00A0           00092     MOVWF   REG1
+02A1   2???           00093     CALL    DATO8
+                      00094     
+02A2   304E           00095     MOVLW   0X4E
+02A3   00A0           00096     MOVWF   REG1
+02A4   2???           00097     CALL    DATO8
+                      00098     
+02A5   30C0           00099     MOVLW   0XC0        ;APUNTADOR A LINEA 2 POSICION CERO
+02A6   00A0           00100     MOVWF   REG1
+02A7   2???           00101     CALL    COMAND8
+                      00102     
+02A8   01A1           00103     CLRF    REG2
+02A9   01A0           00104     CLRF    REG1
+                      00105 ;-------------------------------------------------
+                      00106     ;LINEA DOS, MUESTRA EL NUMERO DE INTENTOS QUE QUEDAN
+                      00107 ;----------------------------------------------------    
+02AA                  00108 LINEA6:
+02AA   0821           00109     MOVF    REG2,W
+02AB   2???           00110     CALL    LIN6
+02AC   00A0           00111     MOVWF   REG1 
+02AD   2???           00112     CALL    DATO8
+MPASM 5.65                        CAJERO.ASM   4-26-2017  10:37:34         PAGE 19
+
+
+LOC  OBJECT CODE     LINE SOURCE TEXT
+  VALUE
+
+Message[305]: Using default destination of 1 (file).
+02AE   0AA1           00113     INCF    REG2
+02AF   1E21           00114     BTFSS   REG2,4
+02B0   2???           00115     GOTO    LINEA6
+                      00116   
+                      00117 ;-------------------------------------------------
+                      00118     ;NO SALTA HASTA INGRESAR ENTER POR TECLADO
+                      00119 ;----------------------------------------------------     
+02B1   30FF           00120     MOVLW   0XFF
+02B2   00A6           00121     MOVWF   TECLA
+02B3                  00122 REPE: 
+02B3   300F           00123     MOVLW   0X0F
+02B4   0626           00124     XORWF   TECLA,W
+02B5   1D03           00125     BTFSS   STATUS,Z
+02B6   2???           00126     GOTO    REPE
+                      00127  
+                      00128 ;-------------------------------------------------
+                      00129     ;VA A LA RUTINA A PEDIR NUEVAMENTE LA CLAVE Y RETORNA A REVISAR NUEVAMENTE LA CONTRASEÑA
+                      00130 ;---------------------------------------------------- 
+02B7   2???           00131     CALL    CLAVE
+02B8   2???           00132     GOTO    REVISAR_CLAVE
+                      00133 
+                      00134 ;-------------------------------------------------
+                      00135     ;BORRA Y REGRESA A CERO LCD
+                      00136 ;----------------------------------------------------     
+02B9                  00137 BLOQUEO:
+02B9   3001           00138     MOVLW   0X01                        
+02BA   00A0           00139     MOVWF   REG1
+02BB   2???           00140     CALL    COMAND8
+02BC   01A1           00141     CLRF    REG2
+                      00142 ;-------------------------------------------------
+                      00143     ;MUESTRA EL MENSAJE DE CAJERO BLOQUEADO
+                      00144 ;---------------------------------------------------- 
+02BD                  00145 LINEA7:
+02BD   01A0           00146     CLRF    REG1
+02BE   0821           00147     MOVF    REG2,W
+02BF   2???           00148     CALL    LIN7
+02C0   00A0           00149     MOVWF   REG1
+02C1   2???           00150     CALL    DATO8
+Message[305]: Using default destination of 1 (file).
+02C2   0AA1           00151     INCF    REG2
+02C3   1E21           00152     BTFSS   REG2,4
+02C4   2???           00153     GOTO    LINEA7
+                      00154 ;-------------------------------------------------
+                      00155     ;CUANDO SE OPRIMA LA TECLA INTRO REINICIA EL PROGRAMA
+                      00156 ;----------------------------------------------------    
+02C5   30FF           00157     MOVLW   0XFF
+02C6   00A6           00158     MOVWF   TECLA
+02C7   300F           00159     MOVLW   0X0F
+02C8   0626           00160     XORWF   TECLA,W
+02C9   1D03           00161     BTFSS   STATUS,Z
+02CA   2???           00162     GOTO    $-3
+02CB   2???           00163     GOTO    INICIO
+MPASM 5.65                        CAJERO.ASM   4-26-2017  10:37:34         PAGE 20
+
+
+LOC  OBJECT CODE     LINE SOURCE TEXT
+  VALUE
+
+                      00164     
+                      00165  
+                      00324 #INCLUDE "OPCION.inc"
+                      00001 ;-------------------------------------------------
+                      00002     ;RUTINA PARA ESCOJER QUE TRANSACCION SE DESEA REALIZAR
+                      00003 ;----------------------------------------------------
+02CC                  00004 OPCION:
+                      00005 ;-------------------------------------------------
+                      00006     ;BORRA Y REGRESA A CERO
+                      00007 ;----------------------------------------------------
+02CC                  00008 VUELVE:    
+02CC   3001           00009     MOVLW   0X01                        
+02CD   00A0           00010     MOVWF   REG1
+02CE   2???           00011     CALL    COMAND8
+02CF   01A1           00012     CLRF    REG2
+                      00013 ;-------------------------------------------------
+                      00014     ;MENSAJE EN LINEA UNO ESOJA OPERACION
+                      00015 ;----------------------------------------------------
+                      00016 
+02D0                  00017 LINEA8:
+02D0   01A0           00018     CLRF    REG1
+02D1   0821           00019     MOVF    REG2,W
+02D2   2???           00020     CALL    LIN8
+02D3   00A0           00021     MOVWF   REG1
+02D4   2???           00022     CALL    DATO8
+Message[305]: Using default destination of 1 (file).
+02D5   0AA1           00023     INCF    REG2
+02D6   1E21           00024     BTFSS   REG2,4
+02D7   2???           00025     GOTO    LINEA8
+                      00026 ;-------------------------------------------------
+                      00027     ;APUNTADOR EN LA LINEA 2
+                      00028 ;----------------------------------------------------
+                      00029   
+02D8   30C0           00030     MOVLW   0XC0        
+02D9   00A0           00031     MOVWF   REG1
+02DA   2???           00032     CALL    COMAND8
+02DB   01A1           00033     CLRF    REG2
+02DC   01A0           00034     CLRF    REG1
+                      00035 
+02DD                  00036 LINEA9:
+02DD   01A0           00037     CLRF    REG1
+02DE   0821           00038     MOVF    REG2,W
+02DF   2???           00039     CALL    LIN9
+02E0   00A0           00040     MOVWF   REG1
+02E1   2???           00041     CALL    DATO8
+Message[305]: Using default destination of 1 (file).
+02E2   0AA1           00042     INCF    REG2
+02E3   1E21           00043     BTFSS   REG2,4
+02E4   2???           00044     GOTO    LINEA9 
+                      00045     
+                      00046 ;-------------------------------------------------
+                      00047     ;COLOCA EL CURSOR EN LA PRIMERA LINEA EN EL 7 
+                      00048 ;----------------------------------------------------
+MPASM 5.65                        CAJERO.ASM   4-26-2017  10:37:34         PAGE 21
+
+
+LOC  OBJECT CODE     LINE SOURCE TEXT
+  VALUE
+
+                      00049   
+02E5   3086           00050     MOVLW   0X86        
+02E6   00A0           00051     MOVWF   REG1
+02E7   2???           00052     CALL    COMAND8  
+                      00053 ;-------------------------------------------------
+                      00054     ;NO SALTA SI SE OPRIME UNA TECLA
+                      00055 ;----------------------------------------------------
+02E8                  00056 AA:
+02E8   30FF           00057     MOVLW   0XFF
+02E9   00A6           00058     MOVWF   TECLA
+                      00059  
+02EA   30FF           00060     MOVLW   0XFF
+02EB   0626           00061     XORWF   TECLA,W
+02EC   1903           00062     BTFSC   STATUS,Z
+02ED   2???           00063     GOTO    $-3  
+                      00064      
+                      00065 ;-------------------------------------------------
+                      00066     ;SELECCION DE OPERACION
+                      00067     ;1 CAMBIO DE CONTRASEÑA
+                      00068     ;2 RETIRO DE DINERO
+                      00069     ;3 CONSULTAR SALDO
+                      00070 ;----------------------------------------------------    
+                      00071     
+                      00072 ;-------------------------------------------------
+                      00073     ;RUTINA PARA ASEGURARSE DE NO SALTAR SI SE OPRIME UNA TECLA QUE NO SEA UN NUMERO
+                      00074 ;---------------------------------------------------- 
+02EE   0826           00075     MOVF    TECLA,W
+02EF   00B1           00076     MOVWF   OP
+02F0   3004           00077     MOVLW   0X04
+02F1   0226           00078     SUBWF   TECLA,W
+02F2   1803           00079     BTFSC   STATUS,C
+02F3   2???           00080     GOTO    AA   
+                      00081  
+                      00082 ;-------------------------------------------------
+                      00083     ;MUESTRA EN LCD EL NUMERO DE LA TECLA QUE SE OPRIMIO
+                      00084 ;----------------------------------------------------     
+02F4   0826           00085     MOVF    TECLA,W
+02F5   2???           00086     CALL    LIN4
+02F6   00A0           00087     MOVWF   REG1
+02F7   2???           00088     CALL    DATO8
+                      00089  
+                      00090 ;-------------------------------------------------
+                      00091     ;RUTINA QUE NO PERMITE SALTAR HASTA INGRESAR UNA TECLA
+                      00092     ;LAS TECLAS HABILITADAS SON ENTER BORRAR E INICIO
+                      00093 ;----------------------------------------------------      
+02F8                  00094 XXX:  
+02F8   30FF           00095     MOVLW   0XFF
+02F9   00A6           00096     MOVWF   TECLA
+                      00097  
+02FA   30FF           00098     MOVLW   0XFF
+02FB   0626           00099     XORWF   TECLA,W
+02FC   1903           00100     BTFSC   STATUS,Z
+02FD   2???           00101     GOTO    $-3 
+MPASM 5.65                        CAJERO.ASM   4-26-2017  10:37:34         PAGE 22
+
+
+LOC  OBJECT CODE     LINE SOURCE TEXT
+  VALUE
+
+                      00102     
+02FE   300C           00103     MOVLW   0X0C
+02FF   0626           00104     XORWF   TECLA,W
+0300   1903           00105     BTFSC   STATUS,Z
+0301   2???           00106     GOTO    VUELVE
+                      00107     
+0302   300B           00108     MOVLW   0X0B
+0303   0626           00109     XORWF   TECLA,W
+0304   1903           00110     BTFSC   STATUS,Z
+0305   2???           00111     GOTO    VUELVE
+                      00112     
+0306   300D           00113     MOVLW   0X0D
+0307   0626           00114     XORWF   TECLA,W
+0308   1903           00115     BTFSC   STATUS,Z
+0309   2???           00116     GOTO    INICIO
+                      00117     
+030A   300F           00118     MOVLW   0X0F
+030B   0626           00119     XORWF   TECLA,W
+030C   1D03           00120     BTFSS   STATUS,Z
+030D   2???           00121     GOTO    XXX
+                      00122     
+                      00123     
+                      00124     
+                      00125     
+                      00126 ;-------------------------------------------------
+                      00127     ;SI TECLA ORPIMIDA ES 1 SALTA A LA RUTINA DE CAMBIO DE CONTRASEÑA
+                      00128 ;----------------------------------------------------    
+030E   3001           00129     MOVLW   0X01
+030F   0631           00130     XORWF   OP,W
+0310   1D03           00131     BTFSS   STATUS,Z
+0311   2???           00132     GOTO    $+2
+0312   2???           00133     CALL    CAMBIAR_CLAVE
+                      00134 ;-------------------------------------------------
+                      00135     ;SI TECLA ORPIMIDA ES 2 SALTA A LA RUTINA DE RETIRO DE DINERO
+                      00136 ;----------------------------------------------------     
+0313   3002           00137     MOVLW   0X02
+0314   0631           00138     XORWF   OP,W
+0315   1D03           00139     BTFSS   STATUS,Z
+0316   2???           00140     GOTO    $+2
+0317   2???           00141     CALL    RETIRO
+                      00142 ;-------------------------------------------------
+                      00143     ;SI TECLA ORPIMIDA ES 3 SALTA A LA RUTINA DE CONSULTA DE SALDO
+                      00144 ;----------------------------------------------------     
+0318   3003           00145     MOVLW   0X03
+0319   0631           00146     XORWF   OP,W
+031A   1D03           00147     BTFSS   STATUS,Z
+031B   2???           00148     GOTO    OPCION
+031C   2???           00149     CALL    SALDO
+                      00325 #INCLUDE "CAMBIAR_CLAVE.inc"
+                      00001 
+                      00002     ;-------------------------------------------------
+                      00003     ;LA FUNCION DE ESTA RUTINA ES LA DE CAMBIAR LA CLAVE DE INGRESO
+                      00004 ;----------------------------------------------------
+MPASM 5.65                        CAJERO.ASM   4-26-2017  10:37:34         PAGE 23
+
+
+LOC  OBJECT CODE     LINE SOURCE TEXT
+  VALUE
+
+031D                  00005 CAMBIAR_CLAVE:
+                      00006     
+                      00007     
+                      00008 ;-------------------------------------------------
+                      00009     ;BORRA Y REGRESA A CERO
+                      00010 ;----------------------------------------------------
+031D   3001           00011     MOVLW   0X01                        ;BORRA Y REGRESA A CERO
+031E   00A0           00012     MOVWF   REG1
+031F   2???           00013     CALL    COMAND8
+0320   01A1           00014     CLRF    REG2
+                      00015 ;-------------------------------------------------
+                      00016     ;MUESTRA MENSAJE DE INGRESE CONTRASEÑA
+                      00017 ;----------------------------------------------------
+0321                  00018 LINEA11:
+0321   01A0           00019     CLRF    REG1
+0322   0821           00020     MOVF    REG2,W
+0323   2???           00021     CALL    LIN11
+0324   00A0           00022     MOVWF   REG1
+0325   2???           00023     CALL    DATO8
+Message[305]: Using default destination of 1 (file).
+0326   0AA1           00024     INCF    REG2
+0327   1E21           00025     BTFSS   REG2,4
+0328   2???           00026     GOTO    LINEA11
+                      00027 ;-------------------------------------------------
+                      00028     ;APUNTADOR A LINEA 2 POSICION CERO
+                      00029 ;----------------------------------------------------
+                      00030 
+0329   30C0           00031     MOVLW   0XC0        
+032A   00A0           00032     MOVWF   REG1
+032B   2???           00033     CALL    COMAND8
+032C   01A1           00034     CLRF    REG2
+032D   01A0           00035     CLRF    REG1
+                      00036  
+                      00037 ;-------------------------------------------------
+                      00038     ;MUESTRA EL NUMERO DE VECES QUE SE HA INTRODUCIDO LA CONTRASEÑA  **** EN LA FILA 2
+                      00039 ;----------------------------------------------------
+032E                  00040 LINEA12:
+032E   0821           00041     MOVF    REG2,W
+032F   2???           00042     CALL    LIN12
+0330   00A0           00043     MOVWF   REG1 
+0331   2???           00044     CALL    DATO8
+Message[305]: Using default destination of 1 (file).
+0332   0AA1           00045     INCF    REG2
+0333   1E21           00046     BTFSS   REG2,4
+0334   2???           00047     GOTO    LINEA12
+                      00048     
+0335   30C7           00049     MOVLW   0XC7        ;APUNTADOR A LINEA 2 POSICION CERO
+0336   00A0           00050     MOVWF   REG1
+0337   2???           00051     CALL    COMAND8
+                      00052 
+                      00053 
+                      00054 ;-------------------------------------------------
+                      00055     ;SALTA CUANDO SE OPRIMA UNA TECLA DEL TECLADO
+MPASM 5.65                        CAJERO.ASM   4-26-2017  10:37:34         PAGE 24
+
+
+LOC  OBJECT CODE     LINE SOURCE TEXT
+  VALUE
+
+                      00056 ;----------------------------------------------------  
+0338                  00057 BOR_1C:    
+0338   30FF           00058     MOVLW   0XFF
+0339   00A6           00059     MOVWF   TECLA
+033A                  00060 REP1C:  
+033A   30FF           00061     MOVLW   0XFF
+033B   0626           00062     XORWF   TECLA,W
+033C   1903           00063     BTFSC   STATUS,Z
+033D   2???           00064     GOTO    REP1C  
+                      00065  ;-------------------------------------------------
+                      00066     ;RUTINA QUE PERMITE COMPROBAR QUE LA TECLA QUE SE HALLA ORPIMIDO NO SEA DIFERENTE A LA DE UN NUMERO
+                      00067 ;----------------------------------------------------     
+033E   300A           00068     MOVLW   0X0A
+033F   0226           00069     SUBWF   TECLA,W
+0340   1803           00070     BTFSC   STATUS,C
+0341   2???           00071     GOTO    BOR_1C
+                      00072     
+                      00073 ;-------------------------------------------------
+                      00074     ;GUARDA EL VALOR DE LA TECLA EN EL PRIMER DIGITO DE LA CLAVE Y MUESTRA EL NUMERO EN LA LCD
+                      00075 ;---------------------------------------------------- 
+                      00076     
+0342   0826           00077     MOVF    TECLA,W
+0343   00AB           00078     MOVWF   CLAVEC_0
+0344   2???           00079     CALL    LIN4
+0345   00A0           00080     MOVWF   REG1
+0346   2???           00081     CALL    DATO8
+                      00082 
+                      00083 ;-------------------------------------------------
+                      00084     ;SALTA CUANDO SE OPRIMA UNA TECLA DEL TECLADO
+                      00085 ;---------------------------------------------------- 
+0347                  00086 BOR_2C: 
+0347   30FF           00087     MOVLW   0XFF
+0348   00A6           00088     MOVWF   TECLA
+0349                  00089 REP2C: 
+0349   30FF           00090     MOVLW   0XFF
+034A   0626           00091     XORWF   TECLA,W
+034B   1903           00092     BTFSC   STATUS,Z
+034C   2???           00093     GOTO    REP2C   
+                      00094     
+                      00095 ;-------------------------------------------------
+                      00096     ;RETORNA A PEDIR EL PRIMER DIGITO SI SE OPRIME LA TECLA DE BORRAR
+                      00097 ;----------------------------------------------------  
+034D   300C           00098     MOVLW   0X0C
+034E   0626           00099     XORWF   TECLA,W
+034F   1903           00100     BTFSC   STATUS,Z
+0350   2???           00101     GOTO    OPCION
+                      00102     
+0351   300B           00103     MOVLW   0X0B
+0352   0626           00104     XORWF   TECLA,W
+0353   1D03           00105     BTFSS   STATUS,Z
+0354   2???           00106     GOTO    TECLA2C 
+                      00107     
+                      00108     
+MPASM 5.65                        CAJERO.ASM   4-26-2017  10:37:34         PAGE 25
+
+
+LOC  OBJECT CODE     LINE SOURCE TEXT
+  VALUE
+
+                      00109     
+0355   3010           00110     MOVLW   0X10        ;APUNTADOR A LINEA 2 POSICION CERO
+0356   00A0           00111     MOVWF   REG1
+0357   2???           00112     CALL    COMAND8
+0358   2???           00113     GOTO    BOR_1C
+                      00114     
+                      00115  ;-------------------------------------------------
+                      00116     ;RUTINA QUE PERMITE COMPROBAR QUE LA TECLA QUE SE HALLA ORPIMIDO NO SEA DIFERENTE A LA DE UN NUMERO
+                      00117 ;----------------------------------------------------     
+0359                  00118 TECLA2C:  
+0359   300A           00119     MOVLW   0X0A
+035A   0226           00120     SUBWF   TECLA,W
+035B   1803           00121     BTFSC   STATUS,C
+035C   2???           00122     GOTO    BOR_2C
+                      00123 
+                      00124 
+                      00125 ;-------------------------------------------------
+                      00126     ;GUARDA EL VALOR DE LA TECLA EN EL SEGUNDO DIGITO DE LA CLAVE Y MUESTRA EL NUMERO EN LA LCD
+                      00127 ;---------------------------------------------------- 
+                      00128  
+                      00129    
+035D   0826           00130     MOVF    TECLA,W
+035E   00AC           00131     MOVWF   CLAVEC_1
+035F   2???           00132     CALL    LIN4
+0360   00A0           00133     MOVWF   REG1
+0361   2???           00134     CALL    DATO8
+                      00135  
+                      00136 ;-------------------------------------------------
+                      00137     ;SALTA CUANDO SE OPRIMA UNA TECLA DEL TECLADO
+                      00138 ;---------------------------------------------------- 
+0362                  00139 BOR_3C:  
+0362   30FF           00140     MOVLW   0XFF
+0363   00A6           00141     MOVWF   TECLA
+0364                  00142 REP3C:
+0364   30FF           00143     MOVLW   0XFF
+0365   0626           00144     XORWF   TECLA,W
+0366   1903           00145     BTFSC   STATUS,Z
+0367   2???           00146     GOTO    REP3C
+                      00147     
+                      00148 ;-------------------------------------------------
+                      00149     ;RETORNA A PEDIR EL SEGUNDO DIGITO SI SE OPRIME LA TECLA DE BORRAR
+                      00150 ;----------------------------------------------------     
+0368   300C           00151     MOVLW   0X0C
+0369   0626           00152     XORWF   TECLA,W
+036A   1903           00153     BTFSC   STATUS,Z
+036B   2???           00154     GOTO    OPCION
+                      00155     
+036C   300B           00156     MOVLW   0X0B
+036D   0626           00157     XORWF   TECLA,W
+036E   1D03           00158     BTFSS   STATUS,Z
+036F   2???           00159     GOTO    TECLA_3C 
+                      00160     
+0370   3010           00161     MOVLW   0X10        ;APUNTADOR A LINEA 2 POSICION CERO
+MPASM 5.65                        CAJERO.ASM   4-26-2017  10:37:34         PAGE 26
+
+
+LOC  OBJECT CODE     LINE SOURCE TEXT
+  VALUE
+
+0371   00A0           00162     MOVWF   REG1
+0372   2???           00163     CALL    COMAND8
+0373   2???           00164     GOTO    BOR_2C
+                      00165     
+                      00166 ;-------------------------------------------------
+                      00167     ;RUTINA QUE PERMITE COMPROBAR QUE LA TECLA QUE SE HALLA ORPIMIDO NO SEA DIFERENTE A LA DE UN NUMERO
+                      00168 ;----------------------------------------------------     
+0374                  00169 TECLA_3C:
+0374   300A           00170     MOVLW   0X0A
+0375   0226           00171     SUBWF   TECLA,W
+0376   1803           00172     BTFSC   STATUS,C
+0377   2???           00173     GOTO    BOR_3C
+                      00174 
+                      00175 
+                      00176 ;-------------------------------------------------
+                      00177     ;GUARDA EL VALOR DE LA TECLA EN EL TERCER DIGITO DE LA CLAVE Y MUESTRA EL NUMERO EN LA LCD
+                      00178 ;----------------------------------------------------
+                      00179     
+0378   0826           00180     MOVF    TECLA,W
+0379   00AD           00181     MOVWF   CLAVEC_2
+037A   2???           00182     CALL    LIN4
+037B   00A0           00183     MOVWF   REG1
+037C   2???           00184     CALL    DATO8
+                      00185 
+                      00186 ;-------------------------------------------------
+                      00187     ;SALTA CUANDO SE OPRIMA UNA TECLA DEL TECLADO
+                      00188 ;---------------------------------------------------- 
+037D                  00189 BOR_4C:  
+037D   30FF           00190     MOVLW   0XFF
+037E   00A6           00191     MOVWF   TECLA
+037F                  00192 REP4C:
+037F   30FF           00193     MOVLW   0XFF
+0380   0626           00194     XORWF   TECLA,W
+0381   1903           00195     BTFSC   STATUS,Z
+0382   2???           00196     GOTO    REP4C
+                      00197 ;-------------------------------------------------
+                      00198     ;RETORNA A PEDIR EL TERCER DIGITO SI SE OPRIME LA TECLA DE BORRAR 
+                      00199 ;---------------------------------------------------- 
+0383   300C           00200     MOVLW   0X0C
+0384   0626           00201     XORWF   TECLA,W
+0385   1903           00202     BTFSC   STATUS,Z
+0386   2???           00203     GOTO    OPCION
+                      00204     
+0387   300B           00205     MOVLW   0X0B
+0388   0626           00206     XORWF   TECLA,W
+0389   1D03           00207     BTFSS   STATUS,Z
+038A   2???           00208     GOTO    TECLA_4C 
+                      00209     
+038B   3010           00210     MOVLW   0X10        ;APUNTADOR A LINEA 2 POSICION CERO
+038C   00A0           00211     MOVWF   REG1
+038D   2???           00212     CALL    COMAND8
+038E   2???           00213     GOTO    BOR_3C    
+                      00214 ;-------------------------------------------------
+MPASM 5.65                        CAJERO.ASM   4-26-2017  10:37:34         PAGE 27
+
+
+LOC  OBJECT CODE     LINE SOURCE TEXT
+  VALUE
+
+                      00215     ;RUTINA QUE PERMITE COMPROBAR QUE LA TECLA QUE SE HALLA ORPIMIDO NO SEA DIFERENTE A LA DE UN NUMERO
+                      00216 ;----------------------------------------------------     
+038F                  00217 TECLA_4C:
+038F   300A           00218     MOVLW   0X0A
+0390   0226           00219     SUBWF   TECLA,W
+0391   1803           00220     BTFSC   STATUS,C
+0392   2???           00221     GOTO    BOR_4C
+                      00222 
+                      00223 
+                      00224  
+                      00225 ;-------------------------------------------------
+                      00226     ;GUARDA EL VALOR DE LA TECLA EN EL CUARTO DIGITO DE LA CLAVE Y MUESTRA EL NUMERO EN LA LCD
+                      00227 ;----------------------------------------------------
+                      00228     
+0393   0826           00229     MOVF    TECLA,W
+0394   00AE           00230     MOVWF   CLAVEC_3
+0395   2???           00231     CALL    LIN4
+0396   00A0           00232     MOVWF   REG1
+0397   2???           00233     CALL    DATO8
+                      00234     
+                      00235   
+                      00236 ;-------------------------------------------------
+                      00237     ;SALTA CUANDO SE OPRIMA UNA TECLA DEL TECLADO
+                      00238 ;---------------------------------------------------- 
+0398                  00239 BOR_5C:
+0398   30FF           00240     MOVLW   0XFF
+0399   00A6           00241     MOVWF   TECLA
+039A                  00242 REP5C:
+039A   30FF           00243     MOVLW   0XFF
+039B   0626           00244     XORWF   TECLA,W
+039C   1903           00245     BTFSC   STATUS,Z
+039D   2???           00246     GOTO    REP5C
+                      00247 ;-------------------------------------------------
+                      00248     ;RETORNA A PEDIR EL TERCER DIGITO SI SE OPRIME LA TECLA DE BORRAR
+                      00249 ;----------------------------------------------------     
+039E   300C           00250     MOVLW   0X0C
+039F   0626           00251     XORWF   TECLA,W
+03A0   1903           00252     BTFSC   STATUS,Z
+03A1   2???           00253     GOTO    OPCION
+                      00254     
+                      00255     
+03A2   300B           00256     MOVLW   0X0B
+03A3   0626           00257     XORWF   TECLA,W
+03A4   1D03           00258     BTFSS   STATUS,Z
+03A5   2???           00259     GOTO    SALIRAC
+                      00260     
+03A6   3010           00261     MOVLW   0X10        ;APUNTADOR A LINEA 2 POSICION CERO
+03A7   00A0           00262     MOVWF   REG1
+03A8   2???           00263     CALL    COMAND8
+03A9   2???           00264     GOTO    BOR_4C
+                      00265 ;-------------------------------------------------
+                      00266     ;TERMINA LA RUTINA CUANDO SE OPRIME LA TECLA ENTER Y RETORNA A LA FUNCION PRINCIPAL
+                      00267 ;---------------------------------------------------- 
+MPASM 5.65                        CAJERO.ASM   4-26-2017  10:37:34         PAGE 28
+
+
+LOC  OBJECT CODE     LINE SOURCE TEXT
+  VALUE
+
+03AA                  00268 SALIRAC:
+03AA   300F           00269     MOVLW   0X0F
+03AB   0626           00270     XORWF   TECLA,W
+03AC   1D03           00271     BTFSS   STATUS,Z
+03AD   2???           00272     GOTO    BOR_5C
+                      00273 
+                      00274 ;-------------------------------------------------
+                      00275     ;BORRA Y REGRESA A CERO
+                      00276 ;----------------------------------------------------
+03AE   3001           00277     MOVLW   0X01                        ;BORRA Y REGRESA A CERO
+03AF   00A0           00278     MOVWF   REG1
+03B0   2???           00279     CALL    COMAND8
+03B1   01A1           00280     CLRF    REG2
+                      00281 ;-------------------------------------------------
+                      00282     ;MUESTRA MENSAJE DE CLAVE CAMBIADA
+                      00283 ;----------------------------------------------------
+03B2                  00284 LINEA13:
+03B2   01A0           00285     CLRF    REG1
+03B3   0821           00286     MOVF    REG2,W
+03B4   2???           00287     CALL    LIN13
+03B5   00A0           00288     MOVWF   REG1
+03B6   2???           00289     CALL    DATO8
+Message[305]: Using default destination of 1 (file).
+03B7   0AA1           00290     INCF    REG2
+03B8   1E21           00291     BTFSS   REG2,4
+03B9   2???           00292     GOTO    LINEA13
+                      00293     
+03BA                  00294 PP:  
+03BA   30FF           00295     MOVLW   0XFF
+03BB   00A6           00296     MOVWF   TECLA
+03BC                  00297 ZZ:
+03BC   30FF           00298     MOVLW   0XFF
+03BD   0626           00299     XORWF   TECLA,W
+03BE   1903           00300     BTFSC   STATUS,Z
+03BF   2???           00301     GOTO    ZZ
+                      00302 ;-------------------------------------------------
+                      00303     ;RETORNA A PEDIR EL TERCER DIGITO SI SE OPRIME LA TECLA DE BORRAR 
+                      00304 ;---------------------------------------------------- 
+03C0   300C           00305     MOVLW   0X0C
+03C1   0626           00306     XORWF   TECLA,W
+03C2   1903           00307     BTFSC   STATUS,Z
+03C3   2???           00308     GOTO    OPCION
+                      00309     
+                      00310     
+03C4   300F           00311     MOVLW   0X0F
+03C5   0626           00312     XORWF   TECLA,W
+03C6   1903           00313     BTFSC   STATUS,Z
+03C7   2???           00314     GOTO    OPCION
+                      00315     
+03C8   300D           00316     MOVLW   0X0D
+03C9   0626           00317     XORWF   TECLA,W
+03CA   1903           00318     BTFSC   STATUS,Z
+03CB   2???           00319     GOTO    INICIO
+MPASM 5.65                        CAJERO.ASM   4-26-2017  10:37:34         PAGE 29
+
+
+LOC  OBJECT CODE     LINE SOURCE TEXT
+  VALUE
+
+03CC   2???           00320     GOTO    PP
+                      00321     
+                      00322 
+                      00326 #INCLUDE "RETIRO.inc"   
+03CD                  00001 RETIRO:
+                      00002      ;-------------------------------------------------
+                      00003     ;LA FUNCION DE ESTA RUTINA ES LA DESCONTAR EL DINERO QUE SE ENCUENTRA EN LA CUENTA
+                      00004 ;----------------------------------------------------
+                      00005     
+                      00006     
+                      00007 ;-------------------------------------------------
+                      00008     ;BORRA Y REGRESA A CERO
+                      00009 ;----------------------------------------------------
+03CD   3001           00010     MOVLW   0X01                        ;BORRA Y REGRESA A CERO
+03CE   00A0           00011     MOVWF   REG1
+03CF   2???           00012     CALL    COMAND8
+03D0   01A1           00013     CLRF    REG2
+                      00014 ;-------------------------------------------------
+                      00015     ;MUESTRA MENSAJE DE INGRESE CONTRASEÑA
+                      00016 ;----------------------------------------------------
+03D1                  00017 LINEA14:
+03D1   01A0           00018     CLRF    REG1
+03D2   0821           00019     MOVF    REG2,W
+03D3   2???           00020     CALL    LIN14
+03D4   00A0           00021     MOVWF   REG1
+03D5   2???           00022     CALL    DATO8
+Message[305]: Using default destination of 1 (file).
+03D6   0AA1           00023     INCF    REG2
+03D7   1E21           00024     BTFSS   REG2,4
+03D8   2???           00025     GOTO    LINEA14
+                      00026 ;-------------------------------------------------
+                      00027     ;APUNTADOR A LINEA 2 POSICION CERO
+                      00028 ;----------------------------------------------------
+                      00029 
+03D9   30C0           00030     MOVLW   0XC0        
+03DA   00A0           00031     MOVWF   REG1
+03DB   2???           00032     CALL    COMAND8
+03DC   01A1           00033     CLRF    REG2
+03DD   01A0           00034     CLRF    REG1
+                      00035  
+                      00036 ;-------------------------------------------------
+                      00037     ;MUESTRA EL NUMERO DE VECES QUE SE HA INTRODUCIDO LA CONTRASEÑA  **** EN LA FILA 2
+                      00038 ;----------------------------------------------------
+03DE                  00039 LINEA15:
+03DE   0821           00040     MOVF    REG2,W
+03DF   2???           00041     CALL    LIN15
+03E0   00A0           00042     MOVWF   REG1 
+03E1   2???           00043     CALL    DATO8
+Message[305]: Using default destination of 1 (file).
+03E2   0AA1           00044     INCF    REG2
+03E3   1E21           00045     BTFSS   REG2,4
+03E4   2???           00046     GOTO    LINEA15
+                      00047 
+MPASM 5.65                        CAJERO.ASM   4-26-2017  10:37:34         PAGE 30
+
+
+LOC  OBJECT CODE     LINE SOURCE TEXT
+  VALUE
+
+                      00048 
+                      00049 ;-------------------------------------------------
+                      00050     ;COLOCA EL CURSOR EN LA PRIMERA LINEA EN EL INICIO
+                      00051 ;----------------------------------------------------
+                      00052   
+03E5   3080           00053     MOVLW   0X80        
+03E6   00A0           00054     MOVWF   REG1
+03E7   2???           00055     CALL    COMAND8
+                      00056     
+                      00057 ;-------------------------------------------------
+                      00058     ;NO SALTA SI SE OPRIME UNA TECLA
+                      00059 ;----------------------------------------------------
+03E8                  00060 AS:
+03E8   30FF           00061     MOVLW   0XFF
+03E9   00A6           00062     MOVWF   TECLA
+                      00063  
+03EA   30FF           00064     MOVLW   0XFF
+03EB   0626           00065     XORWF   TECLA,W
+03EC   1903           00066     BTFSC   STATUS,Z
+03ED   2???           00067     GOTO    $-3  
+                      00068      
+                      00069 ;-------------------------------------------------
+                      00070     ;SELECCION DE OPERACION
+                      00071     ;1 RETIRO DE 5000
+                      00072     ;2 RETIRO DE 10000
+                      00073     ;3 RETIRO DE 15000
+                      00074     ;4 RETIRO DE 20000
+                      00075 ;----------------------------------------------------    
+                      00076     
+                      00077 ;-------------------------------------------------
+                      00078     ;RUTINA PARA ASEGURARSE DE NO SALTAR SI SE OPRIME UNA TECLA QUE NO SEA UN NUMERO MAYOR A 4
+                      00079 ;---------------------------------------------------- 
+03EE   0826           00080     MOVF    TECLA,W
+03EF   00B3           00081     MOVWF   CAN
+03F0   3005           00082     MOVLW   0X05
+03F1   0226           00083     SUBWF   TECLA,W
+03F2   1803           00084     BTFSC   STATUS,C
+03F3   2???           00085     GOTO    AS   
+                      00086  
+                      00087 ;-------------------------------------------------
+                      00088     ;MUESTRA EN LCD EL NUMERO DE LA TECLA QUE SE OPRIMIO
+                      00089 ;----------------------------------------------------     
+03F4   0826           00090     MOVF    TECLA,W
+03F5   2???           00091     CALL    LIN4
+03F6   00A0           00092     MOVWF   REG1
+03F7   2???           00093     CALL    DATO8
+                      00094  
+                      00095 ;-------------------------------------------------
+                      00096     ;RUTINA QUE NO PERMITE SALTAR HASTA INGRESAR UNA TECLA
+                      00097     ;LAS TECLAS HABILITADAS SON ENTER BORRAR E INICIO
+                      00098 ;----------------------------------------------------      
+Warning[207]: Found label after column 1. (FAB)
+03F8                  00099  FAB:   
+MPASM 5.65                        CAJERO.ASM   4-26-2017  10:37:34         PAGE 31
+
+
+LOC  OBJECT CODE     LINE SOURCE TEXT
+  VALUE
+
+03F8   30FF           00100     MOVLW   0XFF
+03F9   00A6           00101     MOVWF   TECLA
+                      00102  
+03FA   30FF           00103     MOVLW   0XFF
+03FB   0626           00104     XORWF   TECLA,W
+03FC   1903           00105     BTFSC   STATUS,Z
+03FD   2???           00106     GOTO    $-3 
+                      00107     
+03FE   300B           00108     MOVLW   0X0B
+03FF   0626           00109     XORWF   TECLA,W
+0400   1903           00110     BTFSC   STATUS,Z
+0401   2???           00111     GOTO    RETIRO
+                      00112     
+0402   300C           00113     MOVLW   0X0C
+0403   0626           00114     XORWF   TECLA,W
+0404   1903           00115     BTFSC   STATUS,Z
+0405   2???           00116     GOTO    OPCION
+                      00117     
+0406   300D           00118     MOVLW   0X0D
+0407   0626           00119     XORWF   TECLA,W
+0408   1903           00120     BTFSC   STATUS,Z
+0409   2???           00121     GOTO    INICIO
+                      00122     
+040A   300F           00123     MOVLW   0X0F
+040B   0626           00124     XORWF   TECLA,W
+040C   1D03           00125     BTFSS   STATUS,Z
+040D   2???           00126     GOTO    FAB
+                      00127     
+                      00128     
+                      00129     
+                      00130     
+                      00131 ;-------------------------------------------------
+                      00132     ;SI TECLA ORPIMIDA ES 1 EL RETIRO ES DE 5000
+                      00133 ;----------------------------------------------------    
+040E   3001           00134     MOVLW   0X01
+040F   0633           00135     XORWF   CAN,W
+0410   1D03           00136     BTFSS   STATUS,Z
+0411   2???           00137     GOTO    $+2
+0412   2???           00138     GOTO    CINCOMIL
+                      00139 ;-------------------------------------------------
+                      00140     ;SI TECLA ORPIMIDA ES 2 EL RETIRO ES DE 10000
+                      00141 ;----------------------------------------------------     
+0413   3002           00142     MOVLW   0X02
+0414   0633           00143     XORWF   CAN,W
+0415   1D03           00144     BTFSS   STATUS,Z
+0416   2???           00145     GOTO    $+2
+0417   2???           00146     GOTO    DIEZMIL
+                      00147 ;-------------------------------------------------
+                      00148     ;SI TECLA ORPIMIDA ES 3 EL RETIRO ES DE 15000
+                      00149 ;----------------------------------------------------     
+0418   3003           00150     MOVLW   0X03
+0419   0633           00151     XORWF   CAN,W
+041A   1D03           00152     BTFSS   STATUS,Z
+MPASM 5.65                        CAJERO.ASM   4-26-2017  10:37:34         PAGE 32
+
+
+LOC  OBJECT CODE     LINE SOURCE TEXT
+  VALUE
+
+041B   2???           00153     GOTO    $+2
+041C   2???           00154     GOTO    QUINCEMIL
+                      00155     
+                      00156 ;-------------------------------------------------
+                      00157     ;SI TECLA ORPIMIDA ES 4 EL RETIRO ES DE 20000
+                      00158 ;----------------------------------------------------     
+041D   3004           00159     MOVLW   0X04
+041E   0633           00160     XORWF   CAN,W
+041F   1D03           00161     BTFSS   STATUS,Z
+0420   2???           00162     GOTO    RETIRO
+0421   2???           00163     GOTO    VEINTEMIL
+                      00164     
+0422                  00165 CINCOMIL:
+0422   3005           00166     MOVLW   0X05
+0423   0232           00167     SUBWF   DINERO,W
+0424   00B2           00168     MOVWF   DINERO
+0425   1803           00169     BTFSC   STATUS,C
+0426   2???           00170     GOTO    TRANSA
+0427   2???           00171     GOTO    SINSALDO
+                      00172     
+                      00173 
+0428                  00174 DIEZMIL:
+0428   300A           00175     MOVLW   0X0A
+0429   0232           00176     SUBWF   DINERO,W
+042A   00B2           00177     MOVWF   DINERO
+042B   1803           00178     BTFSC   STATUS,C
+042C   2???           00179     GOTO    TRANSA
+042D   300A           00180     MOVLW   0X0A
+042E   0732           00181     ADDWF   DINERO,W
+042F   00B2           00182     MOVWF   DINERO
+0430   2???           00183     GOTO    SINSALDO
+                      00184     
+0431                  00185 QUINCEMIL:
+0431   300F           00186     MOVLW   0X0F
+0432   0232           00187     SUBWF   DINERO,W
+0433   00B2           00188     MOVWF   DINERO
+0434   1803           00189     BTFSC   STATUS,C
+0435   2???           00190     GOTO    TRANSA
+0436   300F           00191     MOVLW   0X0F
+0437   0732           00192     ADDWF   DINERO,W
+0438   00B2           00193     MOVWF   DINERO
+0439   2???           00194     GOTO    SINSALDO
+                      00195     
+                      00196     
+043A                  00197 VEINTEMIL:
+043A   3014           00198     MOVLW   0X14
+043B   0232           00199     SUBWF   DINERO,W
+043C   00B2           00200     MOVWF   DINERO
+043D   1803           00201     BTFSC   STATUS,C
+043E   2???           00202     GOTO    TRANSA
+043F   3014           00203     MOVLW   0X14
+0440   0732           00204     ADDWF   DINERO,W
+0441   00B2           00205     MOVWF   DINERO
+MPASM 5.65                        CAJERO.ASM   4-26-2017  10:37:34         PAGE 33
+
+
+LOC  OBJECT CODE     LINE SOURCE TEXT
+  VALUE
+
+0442   2???           00206     GOTO    SINSALDO
+                      00207     
+                      00208     
+0443                  00209 TRANSA:
+                      00210 ;-------------------------------------------------
+                      00211     ;BORRA Y REGRESA A CERO
+                      00212 ;----------------------------------------------------
+0443   3001           00213     MOVLW   0X01                        ;BORRA Y REGRESA A CERO
+0444   00A0           00214     MOVWF   REG1
+0445   2???           00215     CALL    COMAND8
+0446   01A1           00216     CLRF    REG2
+                      00217 ;-------------------------------------------------
+                      00218     ;MUESTRA MENSAJE TRANSACCION EXITOSA
+                      00219 ;----------------------------------------------------
+                      00220 
+                      00221     
+0447                  00222 LINEA13S:
+0447   01A0           00223     CLRF    REG1
+0448   0821           00224     MOVF    REG2,W
+0449   2???           00225     CALL    LIN13
+044A   00A0           00226     MOVWF   REG1
+044B   2???           00227     CALL    DATO8
+Message[305]: Using default destination of 1 (file).
+044C   0AA1           00228     INCF    REG2
+044D   1E21           00229     BTFSS   REG2,4
+044E   2???           00230     GOTO    LINEA13S
+                      00231     
+044F                  00232 PPP:  
+044F   30FF           00233     MOVLW   0XFF
+0450   00A6           00234     MOVWF   TECLA
+0451                  00235 ZZZ:
+0451   30FF           00236     MOVLW   0XFF
+0452   0626           00237     XORWF   TECLA,W
+0453   1903           00238     BTFSC   STATUS,Z
+0454   2???           00239     GOTO    ZZZ
+                      00240 ;-------------------------------------------------
+                      00241     ;RETORNA A PEDIR EL TERCER DIGITO SI SE OPRIME LA TECLA DE BORRAR 
+                      00242 ;---------------------------------------------------- 
+                      00243 
+0455   300F           00244     MOVLW   0X0F
+0456   0626           00245     XORWF   TECLA,W
+0457   1903           00246     BTFSC   STATUS,Z
+0458   2???           00247     GOTO    OPCION
+                      00248     
+0459   300D           00249     MOVLW   0X0D
+045A   0626           00250     XORWF   TECLA,W
+045B   1903           00251     BTFSC   STATUS,Z
+045C   2???           00252     GOTO    INICIO
+045D   2???           00253     GOTO    PPP
+                      00254     
+045E                  00255 SINSALDO:
+                      00256    ;-------------------------------------------------
+                      00257     ;BORRA Y REGRESA A CERO
+MPASM 5.65                        CAJERO.ASM   4-26-2017  10:37:34         PAGE 34
+
+
+LOC  OBJECT CODE     LINE SOURCE TEXT
+  VALUE
+
+                      00258 ;----------------------------------------------------
+045E   3001           00259     MOVLW   0X01                        ;BORRA Y REGRESA A CERO
+045F   00A0           00260     MOVWF   REG1
+0460   2???           00261     CALL    COMAND8
+0461   01A1           00262     CLRF    REG2
+                      00263     
+0462   3086           00264     MOVLW   0X86                        ;BORRA Y REGRESA A CERO
+0463   00A0           00265     MOVWF   REG1
+0464   2???           00266     CALL    COMAND8
+                      00267 ;-------------------------------------------------
+                      00268     ;MUESTRA MENSAJE SALDO INSUFICIENTE
+                      00269 ;----------------------------------------------------
+0465   3053           00270     MOVLW   'S'                 
+0466   00A0           00271     MOVWF   REG1
+0467   2???           00272     CALL    DATO8
+0468   3041           00273     MOVLW   'A'                 
+0469   00A0           00274     MOVWF   REG1
+046A   2???           00275     CALL    DATO8
+046B   304C           00276     MOVLW   'L'                 
+046C   00A0           00277     MOVWF   REG1
+046D   2???           00278     CALL    DATO8
+046E   3044           00279     MOVLW   'D'                 
+046F   00A0           00280     MOVWF   REG1
+0470   2???           00281     CALL    DATO8
+0471   304F           00282     MOVLW   'O'                 
+0472   00A0           00283     MOVWF   REG1
+0473   2???           00284     CALL    DATO8
+                      00285     
+0474   30C2           00286     MOVLW   0XC2                        ;POSICIONA EN LA SEGUNDA LINEA EN EL ESPACIO 2
+0475   00A0           00287     MOVWF   REG1
+0476   2???           00288     CALL    COMAND8
+0477   01A1           00289     CLRF    REG2
+                      00290     
+0478   3049           00291     MOVLW   'I'                 
+0479   00A0           00292     MOVWF   REG1
+047A   2???           00293     CALL    DATO8
+047B   304E           00294     MOVLW   'N'                 
+047C   00A0           00295     MOVWF   REG1
+047D   2???           00296     CALL    DATO8
+047E   3053           00297     MOVLW   'S'                 
+047F   00A0           00298     MOVWF   REG1
+0480   2???           00299     CALL    DATO8
+0481   3055           00300     MOVLW   'U'                 
+0482   00A0           00301     MOVWF   REG1
+0483   2???           00302     CALL    DATO8
+0484   3046           00303     MOVLW   'F'                 
+0485   00A0           00304     MOVWF   REG1
+0486   2???           00305     CALL    DATO8
+0487   3049           00306     MOVLW   'I'                 
+0488   00A0           00307     MOVWF   REG1
+0489   2???           00308     CALL    DATO8
+048A   3043           00309     MOVLW   'C'                 
+048B   00A0           00310     MOVWF   REG1
+MPASM 5.65                        CAJERO.ASM   4-26-2017  10:37:34         PAGE 35
+
+
+LOC  OBJECT CODE     LINE SOURCE TEXT
+  VALUE
+
+048C   2???           00311     CALL    DATO8
+048D   3049           00312     MOVLW   'I'                 
+048E   00A0           00313     MOVWF   REG1
+048F   2???           00314     CALL    DATO8
+0490   3045           00315     MOVLW   'E'                 
+0491   00A0           00316     MOVWF   REG1
+0492   2???           00317     CALL    DATO8
+0493   304E           00318     MOVLW   'N'                 
+0494   00A0           00319     MOVWF   REG1
+0495   2???           00320     CALL    DATO8
+0496   3054           00321     MOVLW   'T'                 
+0497   00A0           00322     MOVWF   REG1
+0498   2???           00323     CALL    DATO8
+0499   3045           00324     MOVLW   'E'                 
+049A   00A0           00325     MOVWF   REG1
+049B   2???           00326     CALL    DATO8
+                      00327     
+                      00328     
+049C                  00329 PPPP:  
+049C   30FF           00330     MOVLW   0XFF
+049D   00A6           00331     MOVWF   TECLA
+049E                  00332 ZZZZ:
+049E   30FF           00333     MOVLW   0XFF
+049F   0626           00334     XORWF   TECLA,W
+04A0   1903           00335     BTFSC   STATUS,Z
+04A1   2???           00336     GOTO    ZZZZ
+                      00337 ;-------------------------------------------------
+                      00338     ;RETORNA A PEDIR EL TERCER DIGITO SI SE OPRIME LA TECLA DE BORRAR 
+                      00339 ;---------------------------------------------------- 
+                      00340 
+04A2   300F           00341     MOVLW   0X0F
+04A3   0626           00342     XORWF   TECLA,W
+04A4   1903           00343     BTFSC   STATUS,Z
+04A5   2???           00344     GOTO    OPCION
+                      00345     
+04A6   300D           00346     MOVLW   0X0D
+04A7   0626           00347     XORWF   TECLA,W
+04A8   1903           00348     BTFSC   STATUS,Z
+04A9   2???           00349     GOTO    INICIO
+04AA   2???           00350     GOTO    PPPP 
+                      00351     
+                      00352     
+                      00327 #INCLUDE "SALDO.inc" 
+04AB                  00001 SALDO:
+                      00002      
+                      00003 ;-----------------------------------------------
+                      00004     ;CONVERSOR DEL SALDO A BCD DE UNIDADES, DECENAS Y CENTENAS
+                      00005     ;PARA PODER VISUALIZAR DIGITO A DIGIO
+04AB                  00006 CONVERSOR_BCD:
+04AB   01B5           00007     CLRF     ACAMBIAR
+04AC   01B6           00008     CLRF     DECENAS
+04AD   01B7           00009     CLRF     CENTENAS
+04AE   0832           00010     MOVF     DINERO,W
+MPASM 5.65                        CAJERO.ASM   4-26-2017  10:37:34         PAGE 36
+
+
+LOC  OBJECT CODE     LINE SOURCE TEXT
+  VALUE
+
+04AF   00B5           00011     MOVWF    ACAMBIAR
+                      00012 
+04B0                  00013 BCD_ALTO1:
+04B0   0835           00014     MOVF     ACAMBIAR,W
+04B1   3064           00015     MOVLW    .100
+04B2   02B5           00016     SUBWF    ACAMBIAR,F
+04B3   1C03           00017     BTFSS    STATUS,C
+04B4   2???           00018     GOTO     SUMA_CIEN1
+Message[305]: Using default destination of 1 (file).
+04B5   0AB7           00019     INCF     CENTENAS
+04B6   2???           00020     GOTO     BCD_ALTO1
+                      00021     
+04B7                  00022 SUMA_CIEN1:
+04B7   0835           00023     MOVF    ACAMBIAR,W
+04B8   3064           00024     MOVLW   .100
+04B9   07B5           00025     ADDWF   ACAMBIAR,F
+04BA   0835           00026     MOVF    ACAMBIAR,W       
+                      00027     
+04BB                  00028 BCD_BAJO1:
+04BB   0835           00029     MOVF    ACAMBIAR,W
+04BC   300A           00030     MOVLW   .10        ;MOVER 10 AL ACUMULADOR  W
+04BD   02B5           00031     SUBWF   ACAMBIAR,f  ;RESTA ENTRE EL REGISTRO ACAMBIAR Y 100
+04BE   1C03           00032     BTFSS   STATUS,C   ;SALTO SI EL CARRY ESTA EN 1
+04BF   2???           00033     GOTO    SUMA_DIEZ1
+Message[305]: Using default destination of 1 (file).
+04C0   0AB6           00034     INCF    DECENAS    ;INCREMENTO DEL VALOR DEL REGISTRO UNIDECE
+04C1   2???           00035     GOTO    BCD_BAJO1
+04C2                  00036 SUMA_DIEZ1:
+                      00037     
+04C2   0835           00038     MOVF    ACAMBIAR,W
+04C3   300A           00039     MOVLW   .10
+04C4   07B5           00040     ADDWF   ACAMBIAR,F
+                      00041 ;---------------------------------------------
+                      00042     ;VERIFICA SI LA CUENTA TIENE FONDOS
+                      00043  ;---------------------------------------------------
+04C5   3000           00044     MOVLW  0X00
+04C6   0637           00045     XORWF  CENTENAS,W
+04C7   1903           00046     BTFSC  STATUS,Z
+04C8   2???           00047     GOTO   $+2
+04C9   2???           00048     GOTO   MENSAJES_CENTENAS
+                      00049     
+04CA   3000           00050     MOVLW  0X00
+04CB   0636           00051     XORWF  DECENAS,W
+04CC   1903           00052     BTFSC  STATUS,Z
+04CD   2???           00053     GOTO   $+2
+04CE   2???           00054     GOTO   MENSAJES_CENTENAS
+                      00055     
+04CF   3000           00056     MOVLW  0X00
+04D0   0635           00057     XORWF  ACAMBIAR,W
+04D1   1D03           00058     BTFSS  STATUS,Z
+04D2   2???           00059     GOTO   MENSAJES_CENTENAS
+04D3   2???           00060     GOTO   SALDO_INSUFICIENTE  
+                      00061   
+MPASM 5.65                        CAJERO.ASM   4-26-2017  10:37:34         PAGE 37
+
+
+LOC  OBJECT CODE     LINE SOURCE TEXT
+  VALUE
+
+04D4                  00062 MENSAJES_CENTENAS:      
+04D4   3001           00063     MOVLW   0X01                        ;BORRA Y REGRESA A CERO
+04D5   00A0           00064     MOVWF   REG1
+04D6   2???           00065     CALL    COMAND8
+04D7   01A1           00066     CLRF    REG2   
+                      00067 ;-------------------------------------------------
+                      00068     ;MUESTRA MENSAJE SALDO DISPONIBLE
+                      00069 ;----------------------------------------------------
+04D8   3053           00070     MOVLW   'S'                 
+04D9   00A0           00071     MOVWF   REG1
+04DA   2???           00072     CALL    DATO8
+04DB   3041           00073     MOVLW   'A'                 
+04DC   00A0           00074     MOVWF   REG1
+04DD   2???           00075     CALL    DATO8
+04DE   304C           00076     MOVLW   'L'                 
+04DF   00A0           00077     MOVWF   REG1
+04E0   2???           00078     CALL    DATO8
+04E1   3044           00079     MOVLW   'D'                 
+04E2   00A0           00080     MOVWF   REG1
+04E3   2???           00081     CALL    DATO8
+04E4   304F           00082     MOVLW   'O'                 
+04E5   00A0           00083     MOVWF   REG1
+04E6   2???           00084     CALL    DATO8
+04E7   303A           00085     MOVLW   ':'                 
+04E8   00A0           00086     MOVWF   REG1
+04E9   2???           00087     CALL    DATO8
+                      00088     
+04EA   3020           00089     MOVLW   ' '                 
+04EB   00A0           00090     MOVWF   REG1
+04EC   2???           00091     CALL    DATO8
+                      00092 
+04ED   3024           00093     MOVLW   '$'                 
+04EE   00A0           00094     MOVWF   REG1
+04EF   2???           00095     CALL    DATO8
+                      00096 
+04F0   0837           00097     MOVF    CENTENAS,W
+04F1   2???           00098     CALL    LIN4
+04F2   00A0           00099     MOVWF   REG1 
+04F3   2???           00100     CALL    DATO8
+                      00101     
+04F4   0836           00102     MOVF    DECENAS,W
+04F5   2???           00103     CALL    LIN4
+04F6   00A0           00104     MOVWF   REG1 
+04F7   2???           00105     CALL    DATO8
+                      00106     
+04F8   0835           00107     MOVF    ACAMBIAR,W
+04F9   2???           00108     CALL    LIN4
+04FA   00A0           00109     MOVWF   REG1 
+04FB   2???           00110     CALL    DATO8
+                      00111     
+04FC   3030           00112     MOVLW   '0'                 
+04FD   00A0           00113     MOVWF   REG1
+04FE   2???           00114     CALL    DATO8
+MPASM 5.65                        CAJERO.ASM   4-26-2017  10:37:34         PAGE 38
+
+
+LOC  OBJECT CODE     LINE SOURCE TEXT
+  VALUE
+
+                      00115     
+04FF   3030           00116     MOVLW   '0'                 
+0500   00A0           00117     MOVWF   REG1
+0501   2???           00118     CALL    DATO8
+                      00119     
+0502   3030           00120     MOVLW   '0'                 
+0503   00A0           00121     MOVWF   REG1
+0504   2???           00122     CALL    DATO8
+0505   2???           00123     GOTO    HH
+                      00124     
+                      00125     
+0506                  00126 SALDO_INSUFICIENTE:
+0506   3001           00127     MOVLW   0X01                        ;BORRA Y REGRESA A CERO
+0507   00A0           00128     MOVWF   REG1
+0508   2???           00129     CALL    COMAND8
+0509   01A1           00130     CLRF    REG2
+                      00131     
+050A   3053           00132     MOVLW   'S'                 
+050B   00A0           00133     MOVWF   REG1
+050C   2???           00134     CALL    DATO8
+050D   3049           00135     MOVLW   'I'                 
+050E   00A0           00136     MOVWF   REG1
+050F   2???           00137     CALL    DATO8
+0510   304E           00138     MOVLW   'N'                 
+0511   00A0           00139     MOVWF   REG1
+0512   2???           00140     CALL    DATO8
+0513   3020           00141     MOVLW   ' '                 
+0514   00A0           00142     MOVWF   REG1
+0515   2???           00143     CALL    DATO8
+0516   3046           00144     MOVLW   'F'                 
+0517   00A0           00145     MOVWF   REG1
+0518   2???           00146     CALL    DATO8
+0519   3030           00147     MOVLW   '0'                 
+051A   00A0           00148     MOVWF   REG1
+051B   2???           00149     CALL    DATO8
+051C   304E           00150     MOVLW   'N'                 
+051D   00A0           00151     MOVWF   REG1
+051E   2???           00152     CALL    DATO8
+051F   3044           00153     MOVLW   'D'                 
+0520   00A0           00154     MOVWF   REG1
+0521   2???           00155     CALL    DATO8
+0522   304F           00156     MOVLW   'O'                 
+0523   00A0           00157     MOVWF   REG1
+0524   2???           00158     CALL    DATO8
+0525   3053           00159     MOVLW   'S'                 
+0526   00A0           00160     MOVWF   REG1
+0527   2???           00161     CALL    DATO8
+                      00162     
+0528                  00163 HH:  
+0528   30FF           00164     MOVLW   0XFF
+0529   00A6           00165     MOVWF   TECLA
+052A                  00166 JJ:
+052A   30FF           00167     MOVLW   0XFF
+MPASM 5.65                        CAJERO.ASM   4-26-2017  10:37:34         PAGE 39
+
+
+LOC  OBJECT CODE     LINE SOURCE TEXT
+  VALUE
+
+052B   0626           00168     XORWF   TECLA,W
+052C   1903           00169     BTFSC   STATUS,Z
+052D   2???           00170     GOTO    JJ
+                      00171 ;-------------------------------------------------
+                      00172     ;RETORNA A PEDIR EL TERCER DIGITO SI SE OPRIME LA TECLA DE BORRAR 
+                      00173 ;---------------------------------------------------- 
+                      00174 
+052E   300F           00175     MOVLW   0X0F
+052F   0626           00176     XORWF   TECLA,W
+0530   1903           00177     BTFSC   STATUS,Z
+0531   2???           00178     GOTO    OPCION
+                      00179     
+0532   300C           00180     MOVLW   0X0C
+0533   0626           00181     XORWF   TECLA,W
+0534   1903           00182     BTFSC   STATUS,Z
+0535   2???           00183     GOTO    OPCION
+                      00184  
+0536   300D           00185     MOVLW   0X0D
+0537   0626           00186     XORWF   TECLA,W
+0538   1903           00187     BTFSC   STATUS,Z
+0539   2???           00188     GOTO    INICIO
+053A   2???           00189     GOTO    HH 
+                      00328 #INCLUDE "Retardos.inc"
+                      00001 ;**************************** Librería "RETARDOS.INC" *********************************
+                      00002 ;
+                      00003 ;       ===================================================================
+                      00004 ;         Del libro "MICROCONTROLADOR PIC16F84. DESARROLLO DE PROYECTOS"
+                      00005 ;         E. Palacios, F. Remiro y L. López.            www.pic16f84a.com
+                      00006 ;         Editorial Ra-Ma.  www.ra-ma.es
+                      00007 ;       ===================================================================
+                      00008 ;
+                      00009 ; Librería con múltiples subrutinas de retardos, desde 4 microsegundos hasta 20 segundos.
+                      00010 ; Además se pueden implementar otras subrutinas muy fácilmente.
+                      00011 ;
+                      00012 ; Se han calculado para un sistema microcontrolador con un PIC trabajando con un cristal
+                      00013 ; de cuarzo a 4 MHz. Como cada ciclo máquina son 4 ciclos de reloj, resulta que cada
+                      00014 ; ciclo máquina tarda 4 x 1/4MHz = 1 µs.
+                      00015 ;
+                      00016 ; En los comentarios, "cm" significa "ciclos máquina".
+                      00017 ;
+                      00018 ; ZONA DE DATOS *********************************************************************
+                      00019 
+                      00020         CBLOCK
+  00000038            00021         R_ContA                                         ; Contadores para los retardos.
+  00000039            00022         R_ContB
+  0000003A            00023         R_ContC
+  0000003B            00024     RET1
+  0000003C            00025     RET2
+  0000003D            00026     RET3
+                      00027         ENDC
+                      00028 ;
+                      00029 ; RETARDOS de 4 hasta 10 microsegundos ---------------------------------------------------
+                      00030 ;
+MPASM 5.65                        CAJERO.ASM   4-26-2017  10:37:34         PAGE 40
+
+
+LOC  OBJECT CODE     LINE SOURCE TEXT
+  VALUE
+
+                      00031 ; A continuación retardos pequeños teniendo en cuenta que para una frecuencia de 4 MHZ,
+                      00032 ; la llamada a subrutina "call" tarda 2 ciclos máquina, el retorno de subrutina
+                      00033 ; "return" toma otros 2 ciclos máquina y cada instrucción "nop" tarda 1 ciclo máquina.
+                      00034 ;
+053B                  00035 Retardo_10micros                                ; La llamada "call" aporta 2 ciclos máquina.
+053B   0000           00036         nop                                                     ; Aporta 1 ciclo máquina.
+053C   0000           00037         nop                                                     ; Aporta 1 ciclo máquina.
+053D   0000           00038         nop                                                     ; Aporta 1 ciclo máquina.
+053E   0000           00039         nop                                                     ; Aporta 1 ciclo máquina.
+053F   0000           00040         nop                                                     ; Aporta 1 ciclo máquina.
+0540                  00041 Retardo_5micros                                 ; La llamada "call" aporta 2 ciclos máquina.
+0540   0000           00042         nop                                                     ; Aporta 1 ciclo máquina.
+0541                  00043 Retardo_4micros                                 ; La llamada "call" aporta 2 ciclos máquina.
+0541   0008           00044         return                                          ; El salto del retorno aporta 2 ciclos máquina.
+                      00045 ;
+                      00046 ; RETARDOS de 20 hasta 500 microsegundos ------------------------------------------------
+                      00047 ;
+0542                  00048 Retardo_500micros                               ; La llamada "call" aporta 2 ciclos máquina.
+0542   0000           00049         nop                                                     ; Aporta 1 ciclo máquina.
+0543   30A4           00050         movlw   d'164'                          ; Aporta 1 ciclo máquina. Este es el valor de "K".
+0544   2???           00051         goto    RetardoMicros           ; Aporta 2 ciclos máquina.
+0545                  00052 Retardo_200micros                               ; La llamada "call" aporta 2 ciclos máquina.
+0545   0000           00053         nop                                                     ; Aporta 1 ciclo máquina.
+0546   3040           00054         movlw   d'64'                           ; Aporta 1 ciclo máquina. Este es el valor de "K".
+0547   2???           00055         goto    RetardoMicros           ; Aporta 2 ciclos máquina.
+0548                  00056 Retardo_100micros                               ; La llamada "call" aporta 2 ciclos máquina.
+0548   301F           00057         movlw   d'31'                           ; Aporta 1 ciclo máquina. Este es el valor de "K".
+0549   2???           00058         goto    RetardoMicros           ; Aporta 2 ciclos máquina.
+054A                  00059 Retardo_50micros                                ; La llamada "call" aporta 2 ciclos máquina.
+054A   0000           00060         nop                                                     ; Aporta 1 ciclo máquina.
+054B   300E           00061         movlw   d'14'                           ; Aporta 1 ciclo máquina. Este es el valor de "K".
+054C   2???           00062         goto    RetardoMicros           ; Aporta 2 ciclos máquina.
+054D                  00063 Retardo_20micros                                ; La llamada "call" aporta 2 ciclos máquina.
+054D   3005           00064         movlw   d'5'                            ; Aporta 1 ciclo máquina. Este es el valor de "K".
+                      00065 ;
+                      00066 ; El próximo bloque "RetardoMicros" tarda:
+                      00067 ; 1 + (K-1) + 2 + (K-1)x2 + 2 = (2 + 3K) ciclos máquina.
+                      00068 ;
+054E                  00069 RetardoMicros
+054E   00B8           00070         movwf   R_ContA                         ; Aporta 1 ciclo máquina.
+054F                  00071 Rmicros_Bucle
+054F   0BB8           00072         decfsz  R_ContA,F                       ; (K-1)x1 cm (cuando no salta) + 2 cm (al saltar).
+0550   2???           00073         goto    Rmicros_Bucle           ; Aporta (K-1)x2 ciclos máquina.
+0551   0008           00074         return                                          ; El salto del retorno aporta 2 ciclos máquina.
+                      00075 ;
+                      00076 ;En total estas subrutinas tardan:
+                      00077 ; - Retardo_500micros:  2 + 1 + 1 + 2 + (2 + 3K) = 500 cm = 500 µs. (para K=164 y 4 MHz).
+                      00078 ; - Retardo_200micros:  2 + 1 + 1 + 2 + (2 + 3K) = 200 cm = 200 µs. (para K= 64 y 4 MHz).
+                      00079 ; - Retardo_100micros:  2     + 1 + 2 + (2 + 3K) = 100 cm = 100 µs. (para K= 31 y 4 MHz).
+                      00080 ; - Retardo_50micros :  2 + 1 + 1 + 2 + (2 + 3K) =  50 cm =  50 µs. (para K= 14 y 4 MHz).
+                      00081 ; - Retardo_20micros :  2     + 1     + (2 + 3K) =  20 cm =  20 µs. (para K=  5 y 4 MHz).
+                      00082 ;
+                      00083 ; RETARDOS de 1 ms hasta 200 ms. --------------------------------------------------------
+MPASM 5.65                        CAJERO.ASM   4-26-2017  10:37:34         PAGE 41
+
+
+LOC  OBJECT CODE     LINE SOURCE TEXT
+  VALUE
+
+                      00084 ;
+0552                  00085 Retardo_200ms                                   ; La llamada "call" aporta 2 ciclos máquina.
+0552   30C8           00086         movlw   d'200'                          ; Aporta 1 ciclo máquina. Este es el valor de "M".
+0553   2???           00087         goto    Retardos_ms                     ; Aporta 2 ciclos máquina.
+0554                  00088 Retardo_100ms                                   ; La llamada "call" aporta 2 ciclos máquina.
+0554   3064           00089         movlw   d'100'                          ; Aporta 1 ciclo máquina. Este es el valor de "M".
+0555   2???           00090         goto    Retardos_ms                     ; Aporta 2 ciclos máquina.
+0556                  00091 Retardo_50ms                                    ; La llamada "call" aporta 2 ciclos máquina.
+0556   3032           00092         movlw   d'50'                           ; Aporta 1 ciclo máquina. Este es el valor de "M".
+0557   2???           00093         goto    Retardos_ms                     ; Aporta 2 ciclos máquina.
+0558                  00094 Retardo_20ms                                    ; La llamada "call" aporta 2 ciclos máquina.
+0558   3014           00095         movlw   d'20'                           ; Aporta 1 ciclo máquina. Este es el valor de "M".
+0559   2???           00096         goto    Retardos_ms                     ; Aporta 2 ciclos máquina.
+055A                  00097 Retardo_10ms                                    ; La llamada "call" aporta 2 ciclos máquina.
+055A   300A           00098         movlw   d'10'                           ; Aporta 1 ciclo máquina. Este es el valor de "M".
+055B   2???           00099         goto    Retardos_ms                     ; Aporta 2 ciclos máquina.
+055C                  00100 Retardo_5ms                                             ; La llamada "call" aporta 2 ciclos máquina.
+055C   3005           00101         movlw   d'5'                            ; Aporta 1 ciclo máquina. Este es el valor de "M".
+055D   2???           00102         goto    Retardos_ms                     ; Aporta 2 ciclos máquina.
+055E                  00103 Retardo_2ms                                             ; La llamada "call" aporta 2 ciclos máquina.
+055E   3002           00104         movlw   d'2'                            ; Aporta 1 ciclo máquina. Este es el valor de "M".
+055F   2???           00105         goto    Retardos_ms                     ; Aporta 2 ciclos máquina.
+0560                  00106 Retardo_1ms                                             ; La llamada "call" aporta 2 ciclos máquina.
+0560   3001           00107         movlw   d'1'                            ; Aporta 1 ciclo máquina. Este es el valor de "M".
+                      00108 ;
+                      00109 ; El próximo bloque "Retardos_ms" tarda:
+                      00110 ; 1 + M + M + KxM + (K-1)xM + Mx2 + (K-1)Mx2 + (M-1) + 2 + (M-1)x2 + 2 =
+                      00111 ; = (2 + 4M + 4KM) ciclos máquina. Para K=249 y M=1 supone 1002 ciclos máquina
+                      00112 ; que a 4 MHz son 1002 µs = 1 ms.
+                      00113 ;
+0561                  00114 Retardos_ms
+0561   00B9           00115         movwf   R_ContB                         ; Aporta 1 ciclo máquina.
+0562                  00116 R1ms_BucleExterno
+0562   30F9           00117         movlw   d'249'                          ; Aporta Mx1 ciclos máquina. Este es el valor de "K".
+0563   00B8           00118         movwf   R_ContA                         ; Aporta Mx1 ciclos máquina.
+0564                  00119 R1ms_BucleInterno
+0564   0000           00120         nop                                                     ; Aporta KxMx1 ciclos máquina.
+0565   0BB8           00121         decfsz  R_ContA,F                       ; (K-1)xMx1 cm (cuando no salta) + Mx2 cm (al saltar).
+0566   2???           00122         goto    R1ms_BucleInterno       ; Aporta (K-1)xMx2 ciclos máquina.
+0567   0BB9           00123         decfsz  R_ContB,F                       ; (M-1)x1 cm (cuando no salta) + 2 cm (al saltar).
+0568   2???           00124         goto    R1ms_BucleExterno       ; Aporta (M-1)x2 ciclos máquina.
+0569   0008           00125         return                                          ; El salto del retorno aporta 2 ciclos máquina.
+                      00126 ;
+                      00127 ;En total estas subrutinas tardan:
+                      00128 ; - Retardo_200ms:      2 + 1 + 2 + (2 + 4M + 4KM) = 200007 cm = 200 ms. (M=200 y K=249).
+                      00129 ; - Retardo_100ms:      2 + 1 + 2 + (2 + 4M + 4KM) = 100007 cm = 100 ms. (M=100 y K=249).
+                      00130 ; - Retardo_50ms :      2 + 1 + 2 + (2 + 4M + 4KM) =  50007 cm =  50 ms. (M= 50 y K=249).
+                      00131 ; - Retardo_20ms :      2 + 1 + 2 + (2 + 4M + 4KM) =  20007 cm =  20 ms. (M= 20 y K=249).
+                      00132 ; - Retardo_10ms :      2 + 1 + 2 + (2 + 4M + 4KM) =  10007 cm =  10 ms. (M= 10 y K=249).
+                      00133 ; - Retardo_5ms  :      2 + 1 + 2 + (2 + 4M + 4KM) =   5007 cm =   5 ms. (M=  5 y K=249).
+                      00134 ; - Retardo_2ms  :      2 + 1 + 2 + (2 + 4M + 4KM) =   2007 cm =   2 ms. (M=  2 y K=249).
+                      00135 ; - Retardo_1ms  :      2 + 1     + (2 + 4M + 4KM) =   1005 cm =   1 ms. (M=  1 y K=249).
+                      00136 ;
+MPASM 5.65                        CAJERO.ASM   4-26-2017  10:37:34         PAGE 42
+
+
+LOC  OBJECT CODE     LINE SOURCE TEXT
+  VALUE
+
+                      00137 ; RETARDOS de 0.5 hasta 20 segundos ---------------------------------------------------
+                      00138 ;
+056A                  00139 Retardo_20s                                             ; La llamada "call" aporta 2 ciclos máquina.
+056A   30C8           00140         movlw   d'200'                          ; Aporta 1 ciclo máquina. Este es el valor de "N".
+056B   2???           00141         goto    Retardo_1Decima         ; Aporta 2 ciclos máquina.
+056C                  00142 Retardo_10s                                             ; La llamada "call" aporta 2 ciclos máquina.
+056C   3064           00143         movlw   d'100'                          ; Aporta 1 ciclo máquina. Este es el valor de "N".
+056D   2???           00144         goto    Retardo_1Decima         ; Aporta 2 ciclos máquina.
+056E                  00145 Retardo_5s                                              ; La llamada "call" aporta 2 ciclos máquina.
+056E   3032           00146         movlw   d'50'                           ; Aporta 1 ciclo máquina. Este es el valor de "N".
+056F   2???           00147         goto    Retardo_1Decima         ; Aporta 2 ciclos máquina.
+0570                  00148 Retardo_2s                                              ; La llamada "call" aporta 2 ciclos máquina.
+0570   3014           00149         movlw   d'20'                           ; Aporta 1 ciclo máquina. Este es el valor de "N".
+0571   2???           00150         goto    Retardo_1Decima         ; Aporta 2 ciclos máquina.
+0572                  00151 Retardo_1s                                              ; La llamada "call" aporta 2 ciclos máquina.
+0572   300A           00152         movlw   d'10'                           ; Aporta 1 ciclo máquina. Este es el valor de "N".
+0573   2???           00153         goto    Retardo_1Decima         ; Aporta 2 ciclos máquina.
+0574                  00154 Retardo_500ms                                   ; La llamada "call" aporta 2 ciclos máquina.
+0574   3005           00155         movlw   d'5'                            ; Aporta 1 ciclo máquina. Este es el valor de "N".
+                      00156 ;
+                      00157 ; El próximo bloque "Retardo_1Decima" tarda:
+                      00158 ; 1 + N + N + MxN + MxN + KxMxN + (K-1)xMxN + MxNx2 + (K-1)xMxNx2 +
+                      00159 ;   + (M-1)xN + Nx2 + (M-1)xNx2 + (N-1) + 2 + (N-1)x2 + 2 =
+                      00160 ; = (2 + 4M + 4MN + 4KM) ciclos máquina. Para K=249, M=100 y N=1 supone 100011
+                      00161 ; ciclos máquina que a 4 MHz son 100011 µs = 100 ms = 0,1 s = 1 décima de segundo.
+                      00162 ;
+0575                  00163 Retardo_1Decima
+0575   00BA           00164         movwf   R_ContC                         ; Aporta 1 ciclo máquina.
+0576                  00165 R1Decima_BucleExterno2
+0576   3064           00166         movlw   d'100'                          ; Aporta Nx1 ciclos máquina. Este es el valor de "M".
+0577   00B9           00167         movwf   R_ContB                         ; Aporta Nx1 ciclos máquina.
+0578                  00168 R1Decima_BucleExterno
+0578   30F9           00169         movlw   d'249'                          ; Aporta MxNx1 ciclos máquina. Este es el valor de "K".
+0579   00B8           00170         movwf   R_ContA                         ; Aporta MxNx1 ciclos máquina.
+057A                  00171 R1Decima_BucleInterno
+057A   0000           00172         nop                                                     ; Aporta KxMxNx1 ciclos máquina.
+057B   0BB8           00173         decfsz  R_ContA,F                       ; (K-1)xMxNx1 cm (si no salta) + MxNx2 cm (al saltar).
+057C   2???           00174         goto    R1Decima_BucleInterno   ; Aporta (K-1)xMxNx2 ciclos máquina.
+057D   0BB9           00175         decfsz  R_ContB,F                       ; (M-1)xNx1 cm (cuando no salta) + Nx2 cm (al saltar).
+057E   2???           00176         goto    R1Decima_BucleExterno   ; Aporta (M-1)xNx2 ciclos máquina.
+057F   0BBA           00177         decfsz  R_ContC,F                       ; (N-1)x1 cm (cuando no salta) + 2 cm (al saltar).
+0580   2???           00178         goto    R1Decima_BucleExterno2  ; Aporta (N-1)x2 ciclos máquina.
+0581   0008           00179         return                                          ; El salto del retorno aporta 2 ciclos máquina.
+                      00180 ;
+                      00181 ;En total estas subrutinas tardan:
+                      00182 ; - Retardo_20s:        2 + 1 + 2 + (2 + 4N + 4MN + 4KMN) = 20000807 cm = 20 s.
+                      00183 ;                       (N=200, M=100 y K=249).
+                      00184 ; - Retardo_10s:        2 + 1 + 2 + (2 + 4N + 4MN + 4KMN) = 10000407 cm = 10 s.
+                      00185 ;                       (N=100, M=100 y K=249).
+                      00186 ; - Retardo_5s:         2 + 1 + 2 + (2 + 4N + 4MN + 4KMN) =  5000207 cm =  5 s.
+                      00187 ;                       (N= 50, M=100 y K=249).
+                      00188 ; - Retardo_2s:         2 + 1 + 2 + (2 + 4N + 4MN + 4KMN) =  2000087 cm =  2 s.
+                      00189 ;                       (N= 20, M=100 y K=249).
+MPASM 5.65                        CAJERO.ASM   4-26-2017  10:37:34         PAGE 43
+
+
+LOC  OBJECT CODE     LINE SOURCE TEXT
+  VALUE
+
+                      00190 ; - Retardo_1s:         2 + 1 + 2 + (2 + 4N + 4MN + 4KMN) =  1000047 cm =  1 s.
+                      00191 ;                       (N= 10, M=100 y K=249).
+                      00192 ; - Retardo_500ms:      2 + 1     + (2 + 4N + 4MN + 4KMN) =   500025 cm = 0,5 s.
+                      00193 ;                       (N=  5, M=100 y K=249).
+                      00194 
+                      00195 ;       ===================================================================
+                      00196 ;         Del libro "MICROCONTROLADOR PIC16F84. DESARROLLO DE PROYECTOS"
+                      00197 ;         E. Palacios, F. Remiro y L. López.            www.pic16f84a.com
+                      00198 ;         Editorial Ra-Ma.  www.ra-ma.es
+                      00199 ;       ===================================================================
+                      00200 
+                      00201 ;------------------------------------------------------------------
+                      00202 ;       FILE:           -
+                      00203 ;       AUTHOR:         -
+                      00204 ;       COMPANY:        -
+                      00205 ;       DEVICE:         -
+                      00206 ;       CREATED:        mm/dd/yyyy
+                      00207 ;       UPDATED:        mm/dd/yyyy
+                      00208 ;
+                      00209 ;       DESCRIP:
+                      00210 ;------------------------------------------------------------------
+                      00211     CBLOCK
+  0000003E            00212         CONT1
+  0000003F            00213         CONT2
+  00000040            00214         CONT3
+  00000041            00215         CONT11
+  00000042            00216         CONT22
+  00000043            00217         CONT33
+                      00218     ENDC
+                      00219 
+                      00220 ;********************************************************************
+                      00221 ; Function: RETARDO 10 MILISEGUNDOS
+                      00222 ;
+                      00223 ; Input:
+                      00224 ;
+                      00225 ; Output:
+                      00226 ;
+                      00227 ; Stack Requirements:
+                      00228 ;
+                      00229 ; Overview:
+                      00230 ;********************************************************************
+0582                  00231 RET_10MS:
+0582   3001           00232         MOVLW   .1
+0583   00BE           00233         MOVWF   CONT1
+0584                  00234 LOOP11:
+0584   30C8           00235         MOVLW   .200
+0585   00BF           00236         MOVWF   CONT2
+0586                  00237 LOOP22:
+0586   30FF           00238         MOVLW   .255
+0587   00C0           00239         MOVWF   CONT3
+0588                  00240 LOOP33:
+Message[305]: Using default destination of 1 (file).
+0588   0BC0           00241         DECFSZ  CONT3
+MPASM 5.65                        CAJERO.ASM   4-26-2017  10:37:34         PAGE 44
+
+
+LOC  OBJECT CODE     LINE SOURCE TEXT
+  VALUE
+
+0589   2???           00242         GOTO    LOOP33
+Message[305]: Using default destination of 1 (file).
+058A   0BBF           00243         DECFSZ  CONT2
+058B   2???           00244         GOTO    LOOP22
+Message[305]: Using default destination of 1 (file).
+058C   0BBE           00245         DECFSZ  CONT1
+058D   2???           00246         GOTO    LOOP11
+058E   0008           00247         RETURN
+                      00248 
+058F   300A           00249 RETARDO MOVLW   .10
+0590   00BD           00250         MOVWF   RET3
+0591   3064           00251 TRES    MOVLW   .100
+0592   00BC           00252         MOVWF   RET2
+0593   3064           00253 DOS     MOVLW   .100
+0594   00BB           00254         MOVWF   RET1
+0595   0BBB           00255 UNO     DECFSZ  RET1,1
+0596   2???           00256         GOTO    UNO
+0597   0BBC           00257         DECFSZ  RET2,1
+0598   2???           00258         GOTO    DOS
+0599   0BBD           00259         DECFSZ  RET3,1
+059A   2???           00260         GOTO    TRES
+059B   0008           00261         RETURN
+                      00262 
+                      00329 
+Warning[205]: Found directive in column 1. (END)
+2FF2 3FFF             00330 END
+MPASM 5.65                        CAJERO.ASM   4-26-2017  10:37:34         PAGE 45
+
+
+SYMBOL TABLE
+  LABEL                             VALUE 
+
+AA                                000002E8
+ABDEN                             00000000
+ABDOVF                            00000007
+ACAMBIAR                          00000035
+ACKDT                             00000005
+ACKEN                             00000004
+ACKSTAT                           00000006
+ADCON0                            0000001F
+ADCON1                            0000009F
+ADCS0                             00000006
+ADCS1                             00000007
+ADDEN                             00000003
+ADFM                              00000007
+ADIE                              00000006
+ADIF                              00000006
+ADON                              00000000
+ADRESH                            0000001E
+ADRESL                            0000009E
+ANS0                              00000000
+ANS1                              00000001
+ANS10                             00000002
+ANS11                             00000003
+ANS12                             00000004
+ANS13                             00000005
+ANS2                              00000002
+ANS3                              00000003
+ANS4                              00000004
+ANS5                              00000005
+ANS6                              00000006
+ANS7                              00000007
+ANS8                              00000000
+ANS9                              00000001
+ANSEL                             00000188
+ANSELH                            00000189
+AS                                000003E8
+BAUDCTL                           00000187
+BCD_ALTO1                         000004B0
+BCD_BAJO1                         000004BB
+BCLIE                             00000003
+BCLIF                             00000003
+BF                                00000000
+BIENVENIDOS                       000001C2
+BLOQUEO                           000002B9
+BOR_1                             000001F0
+BOR_1C                            00000338
+BOR_2                             000001FF
+BOR_2C                            00000347
+BOR_3                             0000021A
+BOR_3C                            00000362
+BOR_4                             00000235
+BOR_4C                            0000037D
+BOR_5                             00000250
+BOR_5C                            00000398
+MPASM 5.65                        CAJERO.ASM   4-26-2017  10:37:34         PAGE 46
+
+
+SYMBOL TABLE
+  LABEL                             VALUE 
+
+BRG0                              00000000
+BRG1                              00000001
+BRG10                             00000002
+BRG11                             00000003
+BRG12                             00000004
+BRG13                             00000005
+BRG14                             00000006
+BRG15                             00000007
+BRG16                             00000003
+BRG2                              00000002
+BRG3                              00000003
+BRG4                              00000004
+BRG5                              00000005
+BRG6                              00000006
+BRG7                              00000007
+BRG8                              00000000
+BRG9                              00000001
+BRGH                              00000002
+C                                 00000000
+C1CH0                             00000000
+C1CH1                             00000001
+C1IE                              00000005
+C1IF                              00000005
+C1OE                              00000005
+C1ON                              00000007
+C1OUT                             00000006
+C1POL                             00000004
+C1R                               00000002
+C1RSEL                            00000005
+C1SEN                             00000005
+C2CH0                             00000000
+C2CH1                             00000001
+C2IE                              00000006
+C2IF                              00000006
+C2OE                              00000005
+C2ON                              00000007
+C2OUT                             00000006
+C2POL                             00000004
+C2R                               00000002
+C2REN                             00000004
+C2RSEL                            00000004
+C2SYNC                            00000000
+CAMBIAR_CLAVE                     0000031D
+CAN                               00000033
+CCP1CON                           00000017
+CCP1IE                            00000002
+CCP1IF                            00000002
+CCP1M0                            00000000
+CCP1M1                            00000001
+CCP1M2                            00000002
+CCP1M3                            00000003
+CCP1X                             00000005
+CCP1Y                             00000004
+MPASM 5.65                        CAJERO.ASM   4-26-2017  10:37:34         PAGE 47
+
+
+SYMBOL TABLE
+  LABEL                             VALUE 
+
+CCP2CON                           0000001D
+CCP2IE                            00000000
+CCP2IF                            00000000
+CCP2M0                            00000000
+CCP2M1                            00000001
+CCP2M2                            00000002
+CCP2M3                            00000003
+CCP2X                             00000005
+CCP2Y                             00000004
+CCPR1                             00000015
+CCPR1H                            00000016
+CCPR1L                            00000015
+CCPR2                             0000001B
+CCPR2H                            0000001C
+CCPR2L                            0000001B
+CENTENAS                          00000037
+CHS0                              00000002
+CHS1                              00000003
+CHS2                              00000004
+CHS3                              00000005
+CINCOMIL                          00000422
+CKE                               00000006
+CKP                               00000004
+CLAVE                             000001CE
+CLAVEC_0                          0000002B
+CLAVEC_1                          0000002C
+CLAVEC_2                          0000002D
+CLAVEC_3                          0000002E
+CLAVE_0                           00000027
+CLAVE_1                           00000028
+CLAVE_2                           00000029
+CLAVE_3                           0000002A
+CM1CON0                           00000107
+CM2CON0                           00000108
+CM2CON1                           00000109
+COMAND8                           000001B8
+CONFIGURACION                     00000181
+CONT1                             0000003E
+CONT11                            00000041
+CONT2                             0000003F
+CONT22                            00000042
+CONT3                             00000040
+CONT33                            00000043
+CONVERSOR_BCD                     000004AB
+CREN                              00000004
+CSRC                              00000007
+D                                 00000005
+DATA_ADDRESS                      00000005
+DATO8                             000001BA
+DC                                00000001
+DC1B0                             00000004
+DC1B1                             00000005
+DC2B0                             00000004
+MPASM 5.65                        CAJERO.ASM   4-26-2017  10:37:34         PAGE 48
+
+
+SYMBOL TABLE
+  LABEL                             VALUE 
+
+DC2B1                             00000005
+DECENAS                           00000036
+DIEZMIL                           00000428
+DIGITO0                           0000026D
+DIGITO1                           00000271
+DIGITO2                           00000275
+DIGITO3                           00000279
+DINERO                            00000032
+DOS                               00000593
+D_A                               00000005
+D_NOT_A                           00000005
+ECCPAS                            0000009C
+ECCPAS0                           00000004
+ECCPAS1                           00000005
+ECCPAS2                           00000006
+ECCPASE                           00000007
+EEADR                             0000010D
+EEADRH                            0000010F
+EECON1                            0000018C
+EECON2                            0000018D
+EEDAT                             0000010C
+EEDATA                            0000010C
+EEDATH                            0000010E
+EEIE                              00000004
+EEIF                              00000004
+EEPGD                             00000007
+ERRORR                            0000002F
+F                                 00000001
+FAB                               000003F8
+FERR                              00000002
+FSR                               00000004
+FVREN                             00000000
+GCEN                              00000007
+GIE                               00000007
+GO                                00000001
+GO_DONE                           00000001
+GO_NOT_DONE                       00000001
+HH                                00000528
+HTS                               00000002
+I2C_DATA                          00000005
+I2C_READ                          00000002
+I2C_START                         00000003
+I2C_STOP                          00000004
+INDF                              00000000
+INICIO                            00000100
+INI_LCD                           000001A9
+INTCON                            0000000B
+INTE                              00000004
+INTEDG                            00000006
+INTENTO                           00000030
+INTERRUPCION                      00000111
+INTF                              00000001
+IOCB                              00000096
+MPASM 5.65                        CAJERO.ASM   4-26-2017  10:37:34         PAGE 49
+
+
+SYMBOL TABLE
+  LABEL                             VALUE 
+
+IOCB0                             00000000
+IOCB1                             00000001
+IOCB2                             00000002
+IOCB3                             00000003
+IOCB4                             00000004
+IOCB5                             00000005
+IOCB6                             00000006
+IOCB7                             00000007
+IRCF0                             00000004
+IRCF1                             00000005
+IRCF2                             00000006
+IRP                               00000007
+JJ                                0000052A
+LIN1                              00000005
+LIN10                             00000099
+LIN11                             000000AA
+LIN12                             000000BB
+LIN13                             000000CC
+LIN14                             000000DD
+LIN15                             000000EE
+LIN2                              00000016
+LIN3                              00000027
+LIN4                              00000038
+LIN5                              00000044
+LIN6                              00000055
+LIN7                              00000066
+LIN8                              00000077
+LIN9                              00000088
+LINEA1                            000001C6
+LINEA11                           00000321
+LINEA12                           0000032E
+LINEA13                           000003B2
+LINEA13S                          00000447
+LINEA14                           000003D1
+LINEA15                           000003DE
+LINEA2                            000001D2
+LINEA3                            000001DF
+LINEA5                            00000281
+LINEA6                            000002AA
+LINEA7                            000002BD
+LINEA8                            000002D0
+LINEA9                            000002DD
+LINEAS5                           00000295
+LOOP                              00000104
+LOOP11                            00000584
+LOOP22                            00000586
+LOOP33                            00000588
+LTS                               00000001
+MAL                               0000028A
+MC1OUT                            00000007
+MC2OUT                            00000006
+MENSAJES_CENTENAS                 000004D4
+MSK                               00000093
+MPASM 5.65                        CAJERO.ASM   4-26-2017  10:37:34         PAGE 50
+
+
+SYMBOL TABLE
+  LABEL                             VALUE 
+
+MSK0                              00000000
+MSK1                              00000001
+MSK2                              00000002
+MSK3                              00000003
+MSK4                              00000004
+MSK5                              00000005
+MSK6                              00000006
+MSK7                              00000007
+NOT_A                             00000005
+NOT_ADDRESS                       00000005
+NOT_BO                            00000000
+NOT_BOR                           00000000
+NOT_DONE                          00000001
+NOT_PD                            00000003
+NOT_POR                           00000001
+NOT_RBPU                          00000007
+NOT_RC8                           00000006
+NOT_T1SYNC                        00000002
+NOT_TO                            00000004
+NOT_TX8                           00000006
+NOT_W                             00000002
+NOT_WRITE                         00000002
+OERR                              00000001
+OP                                00000031
+OPCION                            000002CC
+OPTION_REG                        00000081
+OSCCON                            0000008F
+OSCTUNE                           00000090
+OSFIE                             00000007
+OSFIF                             00000007
+OSTS                              00000003
+P                                 00000004
+P1M0                              00000006
+P1M1                              00000007
+PCL                               00000002
+PCLATH                            0000000A
+PCON                              0000008E
+PDC0                              00000000
+PDC1                              00000001
+PDC2                              00000002
+PDC3                              00000003
+PDC4                              00000004
+PDC5                              00000005
+PDC6                              00000006
+PEIE                              00000006
+PEN                               00000002
+PIE1                              0000008C
+PIE2                              0000008D
+PIR1                              0000000C
+PIR2                              0000000D
+POP                               00000125
+PORTA                             00000005
+PORTB                             00000006
+MPASM 5.65                        CAJERO.ASM   4-26-2017  10:37:34         PAGE 51
+
+
+SYMBOL TABLE
+  LABEL                             VALUE 
+
+PORTC                             00000007
+PORTD                             00000008
+PORTE                             00000009
+PP                                000003BA
+PPP                               0000044F
+PPPP                              0000049C
+PR2                               00000092
+PRSEN                             00000007
+PS0                               00000000
+PS1                               00000001
+PS2                               00000002
+PSA                               00000003
+PSSAC0                            00000002
+PSSAC1                            00000003
+PSSBD0                            00000000
+PSSBD1                            00000001
+PSTRCON                           0000009D
+PULSR                             00000002
+PULSS                             00000003
+PUSH                              00000121
+PWM1CON                           0000009B
+QUINCEMIL                         00000431
+R                                 00000002
+R1Decima_BucleExterno             00000578
+R1Decima_BucleExterno2            00000576
+R1Decima_BucleInterno             0000057A
+R1ms_BucleExterno                 00000562
+R1ms_BucleInterno                 00000564
+RA0                               00000000
+RA1                               00000001
+RA2                               00000002
+RA3                               00000003
+RA4                               00000004
+RA5                               00000005
+RA6                               00000006
+RA7                               00000007
+RB0                               00000000
+RB1                               00000001
+RB2                               00000002
+RB3                               00000003
+RB4                               00000004
+RB5                               00000005
+RB6                               00000006
+RB7                               00000007
+RBIE                              00000003
+RBIF                              00000000
+RC0                               00000000
+RC1                               00000001
+RC2                               00000002
+RC3                               00000003
+RC4                               00000004
+RC5                               00000005
+RC6                               00000006
+MPASM 5.65                        CAJERO.ASM   4-26-2017  10:37:34         PAGE 52
+
+
+SYMBOL TABLE
+  LABEL                             VALUE 
+
+RC7                               00000007
+RC8_9                             00000006
+RC9                               00000006
+RCD8                              00000000
+RCEN                              00000003
+RCIDL                             00000006
+RCIE                              00000005
+RCIF                              00000005
+RCREG                             0000001A
+RCSTA                             00000018
+RD                                00000000
+RD0                               00000000
+RD1                               00000001
+RD2                               00000002
+RD3                               00000003
+RD4                               00000004
+RD5                               00000005
+RD6                               00000006
+RD7                               00000007
+RE0                               00000000
+RE1                               00000001
+RE2                               00000002
+RE3                               00000003
+READ_WRITE                        00000002
+REG1                              00000020
+REG2                              00000021
+REP1                              000001F2
+REP1C                             0000033A
+REP2                              00000201
+REP2C                             00000349
+REP3                              0000021C
+REP3C                             00000364
+REP4                              00000237
+REP4C                             0000037F
+REP5                              00000252
+REP5C                             0000039A
+REPE                              000002B3
+RESTAR                            00000034
+RET1                              0000003B
+RET2                              0000003C
+RET3                              0000003D
+RETARDO                           0000058F
+RETIRO                            000003CD
+RET_10MS                          00000582
+REVISAR_CLAVE                     0000026B
+RP0                               00000005
+RP1                               00000006
+RSEN                              00000001
+RX9                               00000006
+RX9D                              00000000
+R_ContA                           00000038
+R_ContB                           00000039
+R_ContC                           0000003A
+MPASM 5.65                        CAJERO.ASM   4-26-2017  10:37:34         PAGE 53
+
+
+SYMBOL TABLE
+  LABEL                             VALUE 
+
+R_NOT_W                           00000002
+R_W                               00000002
+RetardoMicros                     0000054E
+Retardo_100micros                 00000548
+Retardo_100ms                     00000554
+Retardo_10micros                  0000053B
+Retardo_10ms                      0000055A
+Retardo_10s                       0000056C
+Retardo_1Decima                   00000575
+Retardo_1ms                       00000560
+Retardo_1s                        00000572
+Retardo_200micros                 00000545
+Retardo_200ms                     00000552
+Retardo_20micros                  0000054D
+Retardo_20ms                      00000558
+Retardo_20s                       0000056A
+Retardo_2ms                       0000055E
+Retardo_2s                        00000570
+Retardo_4micros                   00000541
+Retardo_500micros                 00000542
+Retardo_500ms                     00000574
+Retardo_50micros                  0000054A
+Retardo_50ms                      00000556
+Retardo_5micros                   00000540
+Retardo_5ms                       0000055C
+Retardo_5s                        0000056E
+Retardos_ms                       00000561
+Rmicros_Bucle                     0000054F
+S                                 00000003
+SALDO                             000004AB
+SALDO_INSUFICIENTE                00000506
+SALIRA                            00000262
+SALIRAC                           000003AA
+SBOREN                            00000004
+SCKP                              00000004
+SCS                               00000000
+SEN                               00000000
+SENDB                             00000003
+SINSALDO                          0000045E
+SMP                               00000007
+SPBRG                             00000099
+SPBRGH                            0000009A
+SPEN                              00000007
+SR0                               00000006
+SR1                               00000007
+SRCON                             00000185
+SREN                              00000005
+SSPADD                            00000093
+SSPBUF                            00000013
+SSPCON                            00000014
+SSPCON2                           00000091
+SSPEN                             00000005
+SSPIE                             00000003
+MPASM 5.65                        CAJERO.ASM   4-26-2017  10:37:34         PAGE 54
+
+
+SYMBOL TABLE
+  LABEL                             VALUE 
+
+SSPIF                             00000003
+SSPM0                             00000000
+SSPM1                             00000001
+SSPM2                             00000002
+SSPM3                             00000003
+SSPMSK                            00000093
+SSPOV                             00000006
+SSPSTAT                           00000094
+START                             000000FF
+STATUS                            00000003
+STATUS_V                          00000023
+STRA                              00000000
+STRB                              00000001
+STRC                              00000002
+STRD                              00000003
+STRSYNC                           00000004
+SUMA_CIEN1                        000004B7
+SUMA_DIEZ1                        000004C2
+SWDTEN                            00000000
+SYNC                              00000004
+S_STATUS                          00000025
+S_W                               00000024
+T0CS                              00000005
+T0IE                              00000005
+T0IF                              00000002
+T0SE                              00000004
+T1CKPS0                           00000004
+T1CKPS1                           00000005
+T1CON                             00000010
+T1GINV                            00000007
+T1GIV                             00000007
+T1GSS                             00000001
+T1INSYNC                          00000002
+T1OSCEN                           00000003
+T1SYNC                            00000002
+T2CKPS0                           00000000
+T2CKPS1                           00000001
+T2CON                             00000012
+TECLA                             00000026
+TECLA2                            00000211
+TECLA2C                           00000359
+TECLADO                           00000129
+TECLA_3                           0000022C
+TECLA_3C                          00000374
+TECLA_4                           00000247
+TECLA_4C                          0000038F
+TMR0                              00000001
+TMR0IE                            00000005
+TMR0IF                            00000002
+TMR1                              0000000E
+TMR1CS                            00000001
+TMR1GE                            00000006
+TMR1H                             0000000F
+MPASM 5.65                        CAJERO.ASM   4-26-2017  10:37:34         PAGE 55
+
+
+SYMBOL TABLE
+  LABEL                             VALUE 
+
+TMR1IE                            00000000
+TMR1IF                            00000000
+TMR1L                             0000000E
+TMR1ON                            00000000
+TMR2                              00000011
+TMR2IE                            00000001
+TMR2IF                            00000001
+TMR2ON                            00000002
+TOUTPS0                           00000003
+TOUTPS1                           00000004
+TOUTPS2                           00000005
+TOUTPS3                           00000006
+TRANSA                            00000443
+TRES                              00000591
+TRISA                             00000085
+TRISA0                            00000000
+TRISA1                            00000001
+TRISA2                            00000002
+TRISA3                            00000003
+TRISA4                            00000004
+TRISA5                            00000005
+TRISA6                            00000006
+TRISA7                            00000007
+TRISB                             00000086
+TRISB0                            00000000
+TRISB1                            00000001
+TRISB2                            00000002
+TRISB3                            00000003
+TRISB4                            00000004
+TRISB5                            00000005
+TRISB6                            00000006
+TRISB7                            00000007
+TRISC                             00000087
+TRISC0                            00000000
+TRISC1                            00000001
+TRISC2                            00000002
+TRISC3                            00000003
+TRISC4                            00000004
+TRISC5                            00000005
+TRISC6                            00000006
+TRISC7                            00000007
+TRISD                             00000088
+TRISD0                            00000000
+TRISD1                            00000001
+TRISD2                            00000002
+TRISD3                            00000003
+TRISD4                            00000004
+TRISD5                            00000005
+TRISD6                            00000006
+TRISD7                            00000007
+TRISE                             00000089
+TRISE0                            00000000
+TRISE1                            00000001
+MPASM 5.65                        CAJERO.ASM   4-26-2017  10:37:34         PAGE 56
+
+
+SYMBOL TABLE
+  LABEL                             VALUE 
+
+TRISE2                            00000002
+TRISE3                            00000003
+TRMT                              00000001
+TUN0                              00000000
+TUN1                              00000001
+TUN2                              00000002
+TUN3                              00000003
+TUN4                              00000004
+TX8_9                             00000006
+TX9                               00000006
+TX9D                              00000000
+TXD8                              00000000
+TXEN                              00000005
+TXIE                              00000004
+TXIF                              00000004
+TXREG                             00000019
+TXSTA                             00000098
+UA                                00000001
+ULPWUE                            00000005
+ULPWUIE                           00000002
+ULPWUIF                           00000002
+UN                                0000011C
+UNO                               00000595
+VCFG0                             00000004
+VCFG1                             00000005
+VEINTEMIL                         0000043A
+VR0                               00000000
+VR1                               00000001
+VR2                               00000002
+VR3                               00000003
+VRCON                             00000097
+VREN                              00000007
+VROE                              00000006
+VRR                               00000005
+VRSS                              00000004
+VUELVE                            000002CC
+W                                 00000000
+WCOL                              00000007
+WDTCON                            00000105
+WDTPS0                            00000001
+WDTPS1                            00000002
+WDTPS2                            00000003
+WDTPS3                            00000004
+WPUB                              00000095
+WPUB0                             00000000
+WPUB1                             00000001
+WPUB2                             00000002
+WPUB3                             00000003
+WPUB4                             00000004
+WPUB5                             00000005
+WPUB6                             00000006
+WPUB7                             00000007
+WR                                00000001
+MPASM 5.65                        CAJERO.ASM   4-26-2017  10:37:34         PAGE 57
+
+
+SYMBOL TABLE
+  LABEL                             VALUE 
+
+WREN                              00000002
+WRERR                             00000003
+WUE                               00000001
+W_V                               00000022
+XXX                               000002F8
+Z                                 00000002
+ZZ                                000003BC
+ZZZ                               00000451
+ZZZZ                              0000049E
+_.org_1_010F                      0000010F
+_.org_1_012C                      0000012C
+_.org_1_0131                      00000131
+_.org_1_0136                      00000136
+_.org_1_013B                      0000013B
+_.org_1_0142                      00000142
+_.org_1_0147                      00000147
+_.org_1_014C                      0000014C
+_.org_1_0151                      00000151
+_.org_1_0158                      00000158
+_.org_1_015D                      0000015D
+_.org_1_0162                      00000162
+_.org_1_0167                      00000167
+_.org_1_016E                      0000016E
+_.org_1_0173                      00000173
+_.org_1_0178                      00000178
+_.org_1_017D                      0000017D
+_.org_1_01B9                      000001B9
+_.org_1_02CA                      000002CA
+_.org_1_02ED                      000002ED
+_.org_1_02FD                      000002FD
+_.org_1_0311                      00000311
+_.org_1_0316                      00000316
+_.org_1_03ED                      000003ED
+_.org_1_03FD                      000003FD
+_.org_1_0411                      00000411
+_.org_1_0416                      00000416
+_.org_1_041B                      0000041B
+_.org_1_04C8                      000004C8
+_.org_1_04CD                      000004CD
+_BOR21V                           00003EFF
+_BOR40V                           00003FFF
+_BOR4V_BOR21V                     00003EFF
+_BOR4V_BOR40V                     00003FFF
+_BOREN_NSLEEP                     00003EFF
+_BOREN_OFF                        00003CFF
+_BOREN_ON                         00003FFF
+_BOREN_SBODEN                     00003DFF
+_BOR_NSLEEP                       00003EFF
+_BOR_OFF                          00003CFF
+_BOR_ON                           00003FFF
+_BOR_SBODEN                       00003DFF
+_CONFIG1                          00002007
+_CONFIG2                          00002008
+MPASM 5.65                        CAJERO.ASM   4-26-2017  10:37:34         PAGE 58
+
+
+SYMBOL TABLE
+  LABEL                             VALUE 
+
+_CPD_OFF                          00003FFF
+_CPD_ON                           00003F7F
+_CP_OFF                           00003FFF
+_CP_ON                            00003FBF
+_DEBUG_OFF                        00003FFF
+_DEBUG_ON                         00001FFF
+_DEVID1                           00002006
+_EC_OSC                           00003FFB
+_EXTRC                            00003FFF
+_EXTRCIO                          00003FFE
+_EXTRC_OSC_CLKOUT                 00003FFF
+_EXTRC_OSC_NOCLKOUT               00003FFE
+_FCMEN_OFF                        000037FF
+_FCMEN_ON                         00003FFF
+_FOSC_EC                          00003FFB
+_FOSC_EXTRC_CLKOUT                00003FFF
+_FOSC_EXTRC_NOCLKOUT              00003FFE
+_FOSC_HS                          00003FFA
+_FOSC_INTRC_CLKOUT                00003FFD
+_FOSC_INTRC_NOCLKOUT              00003FFC
+_FOSC_LP                          00003FF8
+_FOSC_XT                          00003FF9
+_HS_OSC                           00003FFA
+_IDLOC0                           00002000
+_IDLOC1                           00002001
+_IDLOC2                           00002002
+_IDLOC3                           00002003
+_IESO_OFF                         00003BFF
+_IESO_ON                          00003FFF
+_INTOSC                           00003FFD
+_INTOSCIO                         00003FFC
+_INTRC_OSC_CLKOUT                 00003FFD
+_INTRC_OSC_NOCLKOUT               00003FFC
+_LP_OSC                           00003FF8
+_LVP_OFF                          00002FFF
+_LVP_ON                           00003FFF
+_MCLRE_OFF                        00003FDF
+_MCLRE_ON                         00003FFF
+_PWRTE_OFF                        00003FFF
+_PWRTE_ON                         00003FEF
+_WDTE_OFF                         00003FF7
+_WDTE_ON                          00003FFF
+_WDT_OFF                          00003FF7
+_WDT_ON                           00003FFF
+_WRT_1FOURTH                      00003BFF
+_WRT_256                          00003DFF
+_WRT_HALF                         000039FF
+_WRT_OFF                          00003FFF
+_XT_OSC                           00003FF9
+__16F887                          00000001
+
+MPASM 5.65                        CAJERO.ASM   4-26-2017  10:37:34         PAGE 59
+
+
+
+
+
+Errors   :     0
+Warnings :     8 reported,     0 suppressed
+Messages :    31 reported,     0 suppressed
+
+
